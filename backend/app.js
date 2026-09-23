@@ -1,3 +1,4 @@
+import './env.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -25,6 +26,17 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    if (req.originalUrl.startsWith('/api')) {
+      console.log(`[HTTP] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - start}ms)`);
+    }
+  });
+  next();
+});
+
 // Security HTTP headers
 app.use(
   helmet({
@@ -35,8 +47,11 @@ app.use(
 // CORS configuration supporting local dev and production frontend deployments
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://localhost:3000',
+  'http://localhost:5174',
   'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 

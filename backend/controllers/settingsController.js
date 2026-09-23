@@ -9,7 +9,25 @@ export const getSettings = async (_req, res) => {
     }
     return sendResponse(res, 200, true, 'Store settings loaded.', settings);
   } catch (err) {
-    return sendResponse(res, 500, false, err.message);
+    console.error('[Settings Controller Warning]:', err.message);
+    // Graceful fallback to default store settings so the frontend is never blocked
+    return sendResponse(res, 200, true, 'Store settings (defaults).', {
+      storeName: 'QAMRAH',
+      storeTagline: 'Royal Dry Fruits & Nuts',
+      currency: 'INR',
+      currencySymbol: '₹',
+      shippingCharge: 49,
+      freeShippingThreshold: 999,
+      whatsappNumber: '+916235820223',
+      email: 'concierge@qamrahnuts.com',
+      phone: '+91 (022) 8940-2200',
+      whatsappNotificationEnabled: true,
+      socialLinks: {
+        instagram: 'https://instagram.com/qamrahnuts',
+        facebook: 'https://facebook.com/qamrahnuts',
+        youtube: 'https://youtube.com/@qamrahnuts'
+      }
+    });
   }
 };
 

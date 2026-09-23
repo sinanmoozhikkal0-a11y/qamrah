@@ -1,3 +1,4 @@
+import '../env.js';
 import mongoose from 'mongoose';
 import dns from 'dns';
 
@@ -33,8 +34,10 @@ export const connectDB = async () => {
 
     try {
       const conn = await mongoose.connect(uri, {
-        serverSelectionTimeoutMS: 8000,
-        connectTimeoutMS: 10000,
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 15000,
+        socketTimeoutMS: 45000,
+        maxPoolSize: 10,
         retryWrites: true
       });
 

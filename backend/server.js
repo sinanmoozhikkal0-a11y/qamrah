@@ -1,14 +1,4 @@
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load .env from backend directory or project root
-dotenv.config({ path: path.join(__dirname, '.env') });
-dotenv.config({ path: path.join(__dirname, '../.env') });
-
+import './env.js';
 import app from './app.js';
 import { connectDB } from './config/db.js';
 import { seedDatabase } from './services/seedService.js';
@@ -23,11 +13,11 @@ const startServer = async () => {
     // 2. Auto-seed admin and initial QAMRAH catalog if needed
     await seedDatabase();
 
-    // 3. Start Express server
-    app.listen(PORT, () => {
+    // 3. Start Express server on 0.0.0.0
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`=========================================`);
       console.log(`  QAMRAH Backend API & CMS Server       `);
-      console.log(`  URL: http://localhost:${PORT}          `);
+      console.log(`  URL: http://127.0.0.1:${PORT}          `);
       console.log(`  Status: Running in ${process.env.NODE_ENV || 'development'} mode `);
       console.log(`=========================================`);
     });
