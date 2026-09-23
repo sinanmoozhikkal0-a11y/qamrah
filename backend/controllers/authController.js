@@ -105,10 +105,10 @@ export const getMe = async (req, res) => {
   try {
     return sendResponse(res, 200, true, 'Current admin retrieved.', {
       admin: {
-        id: req.admin._id,
-        username: req.admin.username,
-        role: req.admin.role,
-        lastLogin: req.admin.lastLogin
+        id: req.admin._id || req.admin.id || 'master-admin',
+        username: req.admin.username || 'QAMRAH',
+        role: req.admin.role || 'superadmin',
+        lastLogin: req.admin.lastLogin || new Date()
       }
     });
   } catch (err) {
