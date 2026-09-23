@@ -1,0 +1,25 @@
+# QAMRAH Production Robots Configuration
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Allow: /
+Allow: /shop
+Allow: /shop/*
+Allow: /product/*
+Allow: /our-story
+Allow: /wholesale
+Allow: /contact
+Allow: /images/*
+Allow: /favicon.svg
+
+# Disallow private user flows, checkout, and admin dashboard
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /login
+Disallow: /register
+Disallow: /cart
+Disallow: /wishlist
+Disallow: /api/*
+
+# XML Sitemap
+Sitemap: https://qamrahnuts.com/sitemap.xml

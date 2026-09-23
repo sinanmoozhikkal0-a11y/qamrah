@@ -1,0 +1,21 @@
+{
+  "name": "QAMRAH – Royal Dry Fruits & Nuts",
+  "short_name": "QAMRAH",
+  "description": "Artisanal collection of handpicked W-180 Jumbo Cashews, California Almonds, Saudi Ajwa Dates, and Luxury Mix Nuts.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#040B07",
+  "theme_color": "#07130D",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
