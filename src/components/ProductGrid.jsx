@@ -25,7 +25,7 @@ export default function ProductGrid({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: `repeat(auto-fill, minmax(240px, 1fr))`,
+        gridTemplateColumns: `repeat(auto-fill, minmax(260px, 1fr))`,
         gap: '24px'
       }}
       className="product-grid"

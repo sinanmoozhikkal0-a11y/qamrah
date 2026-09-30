@@ -96,7 +96,20 @@ export default function Home() {
       <Hero onQuickView={setQuickViewProduct} />
 
       {/* SECTION 2: BESTSELLERS */}
-      <section style={{ padding: '80px 0', backgroundColor: '#07130D' }}>
+      <section
+        className="bestsellers-showcase-section"
+        style={{
+          padding: '90px 0',
+          position: 'relative',
+          backgroundColor: '#07130D',
+          backgroundImage: `
+            radial-gradient(ellipse at 85% 15%, rgba(216, 182, 106, 0.09) 0%, transparent 45%),
+            radial-gradient(ellipse at 15% 75%, rgba(22, 60, 40, 0.25) 0%, transparent 55%),
+            radial-gradient(circle at 50% 50%, rgba(10, 28, 18, 0.5) 0%, transparent 100%)
+          `,
+          overflow: 'hidden'
+        }}
+      >
         <div className="container">
           <SectionTitle
             eyebrow="OUR BESTSELLERS"
@@ -116,8 +129,8 @@ export default function Home() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: '20px'
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '24px'
               }}
               className="bestseller-grid"
             >
