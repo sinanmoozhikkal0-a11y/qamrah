@@ -1,461 +1,644 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Award,
-  Leaf,
-  Package,
-  HeartHandshake
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../services/api';
+import { TORN_PAPER_D } from './tornPaperPath';
 
-export default function Hero() {
+const defaultProducts = [
+  {
+    id: 'dates',
+    name: 'Fresh Dates',
+    subName: 'Royal Madinah & Saudi Harvest',
+    headline: 'Start Your Day With Our Fresh Dates.',
+    headingLine1: 'Start Your Day With Our',
+    headingLine2: 'Fresh Dates.',
+    image: '/images/hero_slide_dates.jpg',
+    pouchImage: '/images/pouch_dates.jpg',
+    description: 'Naturally soft, caramel-rich, and nourishing from royal Madinah groves.',
+    ctaText: 'Buy Now',
+    link: '/product/dates',
+    order: 1,
+    isActive: true
+  },
+  {
+    id: 'cashews',
+    name: 'Whole Cashews',
+    subName: 'Colossal W-180 • Hand-Selected',
+    headline: 'Fuel Your Day With Crunchy Cashews.',
+    headingLine1: 'Pure Crunch In Every Bite',
+    headingLine2: 'Colossal Cashews.',
+    image: '/images/hero_slide_cashews.jpg',
+    pouchImage: '/images/pouch_cashew.jpg',
+    description: 'Naturally sourced, hand-sorted colossal kernels with an irresistible golden crunch.',
+    ctaText: 'Buy Now',
+    link: '/product/cashews',
+    order: 2,
+    isActive: true
+  },
+  {
+    id: 'almonds',
+    name: 'California Almonds',
+    subName: 'Supreme Grade • 100% Raw & Natural',
+    headline: 'Sun-Drenched Vitality California Almonds.',
+    headingLine1: 'Sun-Drenched Vitality',
+    headingLine2: 'California Almonds.',
+    image: '/images/hero_slide_almonds.jpg',
+    pouchImage: '/images/pouch_almond.jpg',
+    description: 'Rich in natural Vitamin E, wholesome plant protein, and revitalizing crispness.',
+    ctaText: 'Buy Now',
+    link: '/product/almonds',
+    order: 3,
+    isActive: true
+  },
+  {
+    id: 'pistachios',
+    name: 'Persian Pistachios',
+    subName: 'Persian Akbari • Light Pink Salt Roast',
+    headline: 'Naturally Opened & Crisp Persian Pistachios.',
+    headingLine1: 'Naturally Opened & Crisp',
+    headingLine2: 'Persian Pistachios.',
+    image: '/images/hero_slide_pistachios.png',
+    pouchImage: '/images/pouch_pista.jpg',
+    description: 'Jumbo sun-dried kernels slowly dry-roasted with mineral-rich pink rock salt.',
+    ctaText: 'Buy Now',
+    link: '/product/pistachios',
+    order: 4,
+    isActive: true
+  },
+  {
+    id: 'pistachios-dark',
+    name: 'Royal Emerald Pistachios',
+    subName: 'Emerald Harvest • Rare Caliber',
+    headline: 'The True Taste of Royal Luxury Pistachios.',
+    headingLine1: 'The True Taste of Royal',
+    headingLine2: 'Luxury Pistachios.',
+    image: '/images/hero_slide_pista_dark.jpg',
+    pouchImage: '/images/pouch_pista.jpg',
+    description: 'Vibrant emerald green kernels harvested at peak ripeness for unmatched royal aroma.',
+    ctaText: 'Buy Now',
+    link: '/product/pistachios',
+    order: 5,
+    isActive: true
+  }
+];
+
+const defaultHeroConfig = {
+  enabled: true,
+  rotationTiming: 5,
+  products: defaultProducts
+};
+
+export default function Hero({ onQuickView: _onQuickView }) {
+  const [heroConfig, setHeroConfig] = useState(defaultHeroConfig);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const slideTimerRef = useRef(null);
 
-  // Curated Luxury Collection Slides matching the reference image layout
-  const defaultSlides = [
-    {
-      id: 'cashew',
-      productId: 'cashews',
-      eyebrow: 'PREMIUM NUTS • NATURALLY GOOD',
-      line1: 'Premium Goodness,',
-      line2: 'Carefully Selected.',
-      description:
-        'Handpicked premium nuts and dry fruits, selected for exceptional taste, freshness and quality.',
-      image: '/images/hero_cashew_render.jpg',
-      categorySlug: '/shop/cashews',
-      productSlug: '/product/cashews'
-    },
-    {
-      id: 'dates',
-      productId: 'dates',
-      eyebrow: 'SACRED HARVEST • MADINAH GROVES',
-      line1: 'Royal Ajwa Dates,',
-      line2: 'Holy City Delights.',
-      description:
-        'Authentic Madinah Ajwa dates naturally dried on the palm. Soft, caramel-rich, and packed with essential minerals.',
-      image: '/images/hero_dates_render.jpg',
-      categorySlug: '/shop/dates',
-      productSlug: '/product/dates'
-    },
-    {
-      id: 'almonds',
-      productId: 'almonds',
-      eyebrow: 'SUPREME GRADE • CALIFORNIA GROVES',
-      line1: 'California Almonds,',
-      line2: 'Pure Nutritive Crunch.',
-      description:
-        'Sun-drenched Nonpareil supreme almonds rich in Vitamin E, botanical antioxidants, and sustained daily energy.',
-      image: '/images/hero_almond_render.jpg',
-      categorySlug: '/shop/almonds',
-      productSlug: '/product/almonds'
-    },
-    {
-      id: 'pistachios',
-      productId: 'pistachios',
-      eyebrow: 'PERSIAN ROAST • HIMALAYAN SALT',
-      line1: 'Imperial Pistachios,',
-      line2: 'Roasted To Perfection.',
-      description:
-        'Naturally opened jumbo Iranian pistachios, dry-roasted with pink salt to accentuate vibrant emerald kernels.',
-      image: '/images/hero_pista_render.jpg',
-      categorySlug: '/shop/pistachios',
-      productSlug: '/product/pistachios'
-    }
-  ];
-
-  const [slides, setSlides] = useState(defaultSlides);
-
+  // Fetch dynamic hero configuration from backend CMS
   useEffect(() => {
+    let isMounted = true;
+
     const fetchHeroData = async () => {
       try {
         const res = await api.home.get();
-        if (res.success && res.data?.heroSlides && res.data.heroSlides.length > 0) {
-          const activeSlides = res.data.heroSlides
-            .filter((s) => s.enabled !== false)
-            .map((s, idx) => ({
-              id: s._id || `slide-${idx}`,
-              eyebrow: s.eyebrow || 'PREMIUM NUTS • NATURALLY GOOD',
-              line1: s.line1 || 'Premium Goodness,',
-              line2: s.line2 || 'Carefully Selected.',
-              description: s.description || '',
-              image: s.image || defaultSlides[idx % defaultSlides.length].image,
-              categorySlug: s.button1Link || '/shop',
-              productSlug: s.button2Link || '/shop'
-            }));
-          if (activeSlides.length > 0) {
-            setSlides(activeSlides);
+        if (!isMounted) return;
+
+        if (res.success && res.data) {
+          const cmsHero = res.data.heroSection;
+          if (cmsHero && cmsHero.enabled !== false) {
+            let activeProducts = [];
+            if (Array.isArray(cmsHero.products) && cmsHero.products.length > 0) {
+              activeProducts = cmsHero.products
+                .filter((p) => p.isActive !== false)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+            }
+
+            setHeroConfig({
+              enabled: true,
+              rotationTiming: cmsHero.rotationTiming || 5,
+              products: activeProducts.length > 0 ? activeProducts : defaultProducts
+            });
           }
         }
       } catch (_err) {
-        // preserve fallback default slides
+        // Fallback to defaults
       }
     };
 
     fetchHeroData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  const products = heroConfig.products && heroConfig.products.length > 0
+    ? heroConfig.products
+    : defaultProducts;
 
-  // Auto slide rotation (pauses on hover)
+  const totalProducts = products.length;
+  const currentProduct = products[currentSlide % totalProducts] || products[0];
+
+  const handleNext = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % totalProducts);
+  }, [totalProducts]);
+
+  const handlePrev = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + totalProducts) % totalProducts);
+  }, [totalProducts]);
+
+  const handleSelectSlide = (idx) => {
+    setCurrentSlide(idx);
+  };
+
+  // Auto-rotation timer (pauses when user hovers)
   useEffect(() => {
-    if (isHovered) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [isHovered, slides.length]);
+    if (isHovered || totalProducts <= 1) return;
 
-  const slide = slides[currentSlide];
+    const intervalTime = (heroConfig.rotationTiming || 5) * 1000;
+    slideTimerRef.current = setInterval(() => {
+      handleNext();
+    }, intervalTime);
 
-  const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    return () => {
+      if (slideTimerRef.current) clearInterval(slideTimerRef.current);
+    };
+  }, [isHovered, totalProducts, heroConfig.rotationTiming, handleNext]);
+
+  // Touch swipe support for mobile
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
   };
 
-  const handlePrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
-  const features = [
-    {
-      icon: Award,
-      title: 'PREMIUM QUALITY',
-      subtitle: 'Handpicked premium selection'
-    },
-    {
-      icon: Leaf,
-      title: 'NO PRESERVATIVES',
-      subtitle: 'Pure natural goodness'
-    },
-    {
-      icon: Package,
-      title: 'FRESHLY PACKED',
-      subtitle: 'Packed for maximum freshness'
-    },
-    {
-      icon: HeartHandshake,
-      title: 'NATURALLY HEALTHY',
-      subtitle: 'Wholesome everyday nutrition'
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (diff > 45) {
+      handleNext();
+    } else if (diff < -45) {
+      handlePrev();
     }
-  ];
+    setTouchStartX(null);
+  };
+
+  // Keyboard accessibility
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'ArrowLeft') handlePrev();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleNext, handlePrev]);
+
+  // Split headline lines if provided
+  const line1 = currentProduct.headingLine1 || (
+    currentProduct.headline
+      ? currentProduct.headline.split('\n')[0]
+      : 'Start Your Day With Our'
+  );
+  const line2 = currentProduct.headingLine2 || (
+    currentProduct.headline && currentProduct.headline.includes('\n')
+      ? currentProduct.headline.split('\n')[1]
+      : (currentProduct.name || 'Fresh Dates.')
+  );
 
   return (
-    <section style={{ backgroundColor: '#FAF6F0', padding: '16px 20px 48px', color: '#0F281E' }}>
-      <div style={{ maxWidth: '1380px', margin: '0 auto' }}>
-        
-        {/* ========================================================================= */}
-        {/* MAIN HERO CARD                                                            */}
-        {/* ========================================================================= */}
-
-        {/* ========================================================================= */}
-        {/* 2. MAIN HERO CARD                                                         */}
-        {/* ========================================================================= */}
-        <div
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          style={{
-            position: 'relative',
-            backgroundColor: '#F5EFE4',
-            borderRadius: '32px',
-            border: '1px solid rgba(216, 182, 106, 0.25)',
-            overflow: 'hidden',
-            padding: '56px 64px 64px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.03)',
-            minHeight: '540px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center'
-          }}
-          className="hero-main-card"
-        >
-          {/* Subtle Organic Background Waves */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              opacity: 0.6,
-              background: 'radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.8) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(216, 182, 106, 0.15) 0%, transparent 50%)'
-            }}
-          />
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1.1fr 1fr',
-              gap: '40px',
-              alignItems: 'center',
-              position: 'relative',
-              zIndex: 2
-            }}
-            className="hero-grid"
-          >
-            {/* Left Content Column */}
-            <div>
-              {/* Eyebrow */}
-              <div
-                style={{
-                  fontSize: '0.8rem',
-                  fontWeight: '700',
-                  letterSpacing: '0.18em',
-                  color: '#B0883A',
-                  textTransform: 'uppercase',
-                  marginBottom: '20px'
-                }}
-              >
-                {slide.eyebrow}
-              </div>
-
-              {/* Main Headline */}
-              <h1
-                style={{
-                  fontFamily: 'Playfair Display, Georgia, serif',
-                  fontSize: 'clamp(2.5rem, 4.2vw, 3.8rem)',
-                  fontWeight: '700',
-                  color: '#0F281E',
-                  lineHeight: '1.12',
-                  marginBottom: '24px',
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                <div>{slide.line1}</div>
-                <div>{slide.line2}</div>
-              </h1>
-
-              {/* Subtitle */}
-              <p
-                style={{
-                  fontSize: '1.05rem',
-                  color: '#4B5E53',
-                  maxWidth: '460px',
-                  lineHeight: '1.65',
-                  marginBottom: '36px'
-                }}
-              >
-                {slide.description}
-              </p>
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                <Link
-                  to={slide.categorySlug}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    backgroundColor: '#0E291C',
-                    color: '#FFFFFF',
-                    padding: '14px 28px',
-                    borderRadius: '30px',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                    letterSpacing: '0.08em',
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 16px rgba(14, 41, 28, 0.25)',
-                    transition: 'all 0.25s ease'
-                  }}
-                >
-                  <span>SHOP COLLECTION</span>
-                  <ArrowRight size={16} />
-                </Link>
-
-                <Link
-                  to="/shop"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    backgroundColor: 'transparent',
-                    color: '#0E291C',
-                    padding: '14px 28px',
-                    borderRadius: '30px',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                    letterSpacing: '0.08em',
-                    textDecoration: 'none',
-                    border: '1.5px solid rgba(14, 41, 28, 0.25)',
-                    transition: 'all 0.25s ease'
-                  }}
-                >
-                  <span>VIEW PRODUCTS</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Showcase Column with 3D Photorealistic Render */}
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <div
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: '540px',
-                  aspectRatio: '16/9',
-                  borderRadius: '24px',
-                  overflow: 'hidden',
-                  boxShadow: '0 20px 50px rgba(14, 41, 28, 0.12)',
-                  border: '1px solid rgba(216, 182, 106, 0.3)'
-                }}
-              >
-                <img
-                  key={slide.id}
-                  src={slide.image}
-                  alt={`${slide.line1} ${slide.line2} - QAMRAH Premium Selection`}
-                  fetchPriority="high"
-                  decoding="async"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    animation: 'fadeIn 0.5s ease forwards'
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Right Slide Control Bar */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '28px',
-              right: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              zIndex: 10
-            }}
-          >
-            <button
-              onClick={handlePrev}
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                border: '1px solid rgba(14, 41, 28, 0.2)',
-                backgroundColor: '#FFFFFF',
-                color: '#0F281E',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
-              }}
-              aria-label="Previous Slide"
+    <section
+      className="qamrah-hero-banner"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      aria-label="Fresh Dry Fruits & Dates Showcase"
+    >
+      {/* Background Slides with High-Resolution Photography */}
+      <div className="hero-slides-wrapper">
+        {products.map((product, idx) => {
+          const isActive = idx === currentSlide;
+          return (
+            <div
+              key={product.id || product._id || idx}
+              className={`hero-slide-item ${isActive ? 'active' : ''}`}
+              aria-hidden={!isActive}
             >
-              <ChevronLeft size={18} />
-            </button>
-
-            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0F281E', minWidth: '40px', textAlign: 'center' }}>
-              {currentSlide + 1} / {slides.length}
-            </span>
-
-            <button
-              onClick={handleNext}
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                border: '1px solid rgba(14, 41, 28, 0.2)',
-                backgroundColor: '#FFFFFF',
-                color: '#0F281E',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
-              }}
-              aria-label="Next Slide"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* 3. BOTTOM FEATURE BAR                                                     */}
-        {/* ========================================================================= */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '24px',
-            marginTop: '36px',
-            paddingTop: '12px'
-          }}
-          className="hero-features-grid"
-        >
-          {features.map((feat, idx) => {
-            const Icon = feat.icon;
-            return (
-              <div
-                key={idx}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                  padding: '16px 20px',
-                  borderRadius: '16px',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid rgba(216, 182, 106, 0.2)',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.02)'
-                }}
-              >
-                <div
-                  style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '50%',
-                    border: '1.5px solid #D8B66A',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#B0883A',
-                    flexShrink: 0
-                  }}
-                >
-                  <Icon size={22} />
-                </div>
-                <div>
-                  <h4 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0F281E', letterSpacing: '0.06em', marginBottom: '2px' }}>
-                    {feat.title}
-                  </h4>
-                  <p style={{ fontSize: '0.75rem', color: '#687E72' }}>
-                    {feat.subtitle}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
+              <img
+                src={product.image || '/images/hero_slide_dates.jpg'}
+                alt={product.name || 'QAMRAH Premium Dates and Nuts'}
+                className="hero-slide-img"
+                fetchPriority={idx === 0 ? 'high' : 'auto'}
+                decoding="async"
+              />
+            </div>
+          );
+        })}
       </div>
 
+      {/* Atmospheric Left-Side Gradient Overlay for Flawless Text Readability */}
+      <div className="hero-gradient-overlay" />
+
+      {/* Main Content: Typography and 'Buy Now' Action Button */}
+      <div className="hero-content-layer">
+        <div className="hero-inner-container">
+          <div className="hero-text-content">
+            {/* Main Headline styled like reference picture 1 */}
+            <h1 className="hero-main-title">
+              <span className="hero-title-line1">{line1}</span>
+              <span className="hero-title-line2">{line2}</span>
+            </h1>
+
+            {/* Optional elegant subtitle description */}
+            {currentProduct.description && (
+              <p className="hero-subtext">
+                {currentProduct.description}
+              </p>
+            )}
+
+            {/* Clean White Pill 'Buy Now' Button matching picture 1 */}
+            <div className="hero-cta-box">
+              <Link
+                to={currentProduct.link || '/shop'}
+                className="hero-buy-now-button"
+                id={`hero-buy-now-${currentProduct.id || currentSlide}`}
+              >
+                {currentProduct.ctaText || 'Buy Now'}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sleek Side Chevron Navigation Arrows */}
+      <button
+        type="button"
+        onClick={handlePrev}
+        className="hero-arrow-btn hero-arrow-prev"
+        aria-label="Previous product slide"
+      >
+        <ChevronLeft size={24} />
+      </button>
+
+      <button
+        type="button"
+        onClick={handleNext}
+        className="hero-arrow-btn hero-arrow-next"
+        aria-label="Next product slide"
+      >
+        <ChevronRight size={24} />
+      </button>
+
+      {/* Bottom Center Pagination Dots (Exact layout from Picture 1) */}
+      <div className="hero-pagination-dots" role="tablist" aria-label="Slide indicators">
+        {products.map((product, idx) => {
+          const isActive = idx === currentSlide;
+          return (
+            <button
+              key={idx}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={`Slide ${idx + 1} - ${product.name}`}
+              onClick={() => handleSelectSlide(idx)}
+              className={`hero-dot-indicator ${isActive ? 'active' : ''}`}
+            />
+          );
+        })}
+      </div>
+
+      {/* Authentic Ripped / Torn Paper Bottom Border Divider */}
+      <div className="hero-torn-paper-edge" aria-hidden="true">
+        <svg
+          viewBox="0 0 1440 60"
+          preserveAspectRatio="none"
+          className="hero-torn-paper-svg"
+        >
+          <path d={TORN_PAPER_D} fill="#FFFFFF" />
+        </svg>
+      </div>
+
+      {/* High-End Responsive CSS Matching Picture 1 */}
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.98); }
-          to { opacity: 1; transform: scale(1); }
+        /* ===================================================================
+           HERO BANNER CONTAINER
+           =================================================================== */
+        .qamrah-hero-banner {
+          position: relative;
+          width: 100%;
+          min-height: clamp(480px, 66vh, 680px);
+          overflow: hidden;
+          background-color: #071911;
+          display: flex;
+          align-items: center;
+          user-select: none;
         }
-        @media (max-width: 1024px) {
-          .hero-grid {
-            grid-template-columns: 1fr !important;
-            gap: 32px !important;
-          }
-          .hero-features-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
-          .hero-main-card {
-            padding: 40px 32px 72px !important;
+
+        /* Responsive height */
+        @media (max-width: 768px) {
+          .qamrah-hero-banner {
+            min-height: 480px;
           }
         }
+
+        /* ===================================================================
+           BACKGROUND SLIDES & KEN BURNS ZOOM
+           =================================================================== */
+        .hero-slides-wrapper {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
+        }
+
+        .hero-slide-item {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          opacity: 0;
+          transform: scale(1.03);
+          transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 6s cubic-bezier(0.25, 1, 0.5, 1);
+          pointer-events: none;
+        }
+
+        .hero-slide-item.active {
+          opacity: 1;
+          transform: scale(1);
+          pointer-events: auto;
+        }
+
+        .hero-slide-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 38%;
+          display: block;
+        }
+
+        /* ===================================================================
+           ATMOSPHERIC GRADIENT OVERLAY
+           Matches Picture 1: Dark rich tones on left, transparent on right
+           =================================================================== */
+        .hero-gradient-overlay {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 2;
+          pointer-events: none;
+          background: linear-gradient(
+            90deg,
+            rgba(5, 18, 12, 0.88) 0%,
+            rgba(5, 18, 12, 0.74) 28%,
+            rgba(5, 18, 12, 0.42) 52%,
+            rgba(5, 18, 12, 0.12) 75%,
+            rgba(5, 18, 12, 0.22) 100%
+          );
+        }
+
+        @media (max-width: 768px) {
+          .hero-gradient-overlay {
+            background: linear-gradient(
+              180deg,
+              rgba(5, 18, 12, 0.75) 0%,
+              rgba(5, 18, 12, 0.55) 45%,
+              rgba(5, 18, 12, 0.85) 100%
+            );
+          }
+        }
+
+        /* ===================================================================
+           CONTENT LAYER & TYPOGRAPHY
+           =================================================================== */
+        .hero-content-layer {
+          position: relative;
+          z-index: 3;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          padding-top: 30px;
+          padding-bottom: 70px;
+        }
+
+        .hero-inner-container {
+          width: 100%;
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 0 clamp(24px, 6vw, 90px);
+        }
+
+        .hero-text-content {
+          max-width: 580px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          animation: heroFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes heroFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Headline: Matches Picture 1 font, weight, styling */
+        .hero-main-title {
+          font-family: var(--font-heading, 'Playfair Display', Georgia, serif);
+          font-size: clamp(2.3rem, 4.4vw, 3.7rem);
+          font-weight: 700;
+          line-height: 1.18;
+          letter-spacing: -0.01em;
+          color: #FFFFFF;
+          margin: 0 0 16px 0;
+          text-shadow: 0 3px 16px rgba(0, 0, 0, 0.65), 0 1px 3px rgba(0, 0, 0, 0.4);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .hero-title-line1 {
+          display: block;
+        }
+
+        .hero-title-line2 {
+          display: block;
+        }
+
+        .hero-subtext {
+          font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+          font-size: clamp(0.9rem, 1.15vw, 1.05rem);
+          line-height: 1.6;
+          color: rgba(245, 240, 230, 0.9);
+          margin: 0 0 28px 0;
+          max-width: 480px;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        /* ===================================================================
+           'BUY NOW' BUTTON (Exact match to Picture 1)
+           White background, dark crisp text, rounded corners
+           =================================================================== */
+        .hero-cta-box {
+          display: flex;
+          align-items: center;
+        }
+
+        .hero-buy-now-button {
+          display: inline-block;
+          background-color: #FFFFFF;
+          color: #111E17;
+          font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+          font-size: 0.95rem;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          padding: 12px 34px;
+          border-radius: 8px;
+          text-decoration: none;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+          transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+          cursor: pointer;
+        }
+
+        .hero-buy-now-button:hover {
+          background-color: #FAF4EA;
+          color: #05140D;
+          transform: translateY(-2px);
+          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+        }
+
+        .hero-buy-now-button:active {
+          transform: translateY(0);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ===================================================================
+           PAGINATION DOTS (Exact match to Picture 1)
+           Centered at bottom, small circular dots
+           =================================================================== */
+        .hero-pagination-dots {
+          position: absolute;
+          bottom: 34px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 5;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 6px 12px;
+          border-radius: 9999px;
+          background: rgba(0, 0, 0, 0.15);
+          backdrop-filter: blur(4px);
+        }
+
+        .hero-dot-indicator {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: rgba(255, 255, 255, 0.45);
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero-dot-indicator:hover {
+          background-color: rgba(255, 255, 255, 0.85);
+          transform: scale(1.3);
+        }
+
+        .hero-dot-indicator.active {
+          width: 9px;
+          height: 9px;
+          background-color: #FFFFFF;
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.95);
+        }
+
+        /* ===================================================================
+           SIDE CHEVRON ARROWS (Desktop & Large Screens)
+           =================================================================== */
+        .hero-arrow-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 4;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: rgba(7, 22, 15, 0.45);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #FFFFFF;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(8px);
+          opacity: 0;
+          transition: all 0.3s ease;
+        }
+
+        .qamrah-hero-banner:hover .hero-arrow-btn {
+          opacity: 0.85;
+        }
+
+        .hero-arrow-btn:hover {
+          opacity: 1 !important;
+          background: rgba(216, 182, 106, 0.35);
+          border-color: #D8B66A;
+          color: #FFFFFF;
+          transform: translateY(-50%) scale(1.08);
+        }
+
+        .hero-arrow-prev {
+          left: 20px;
+        }
+
+        .hero-arrow-next {
+          right: 20px;
+        }
+
+        @media (max-width: 768px) {
+          .hero-arrow-btn {
+            display: none;
+          }
+        }
+
+        /* ===================================================================
+           TORN / RIPPED PAPER BOTTOM BORDER (Exact match to Picture 1)
+           =================================================================== */
+        .hero-torn-paper-edge {
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          width: 100%;
+          height: 28px;
+          z-index: 6;
+          pointer-events: none;
+          line-height: 0;
+          overflow: hidden;
+        }
+
+        .hero-torn-paper-svg {
+          width: 100%;
+          height: 100%;
+          display: block;
+          filter: drop-shadow(0 -4px 6px rgba(0, 0, 0, 0.22));
+        }
+
         @media (max-width: 640px) {
-          .hero-features-grid {
-            grid-template-columns: 1fr !important;
+          .hero-torn-paper-edge {
+            height: 20px;
           }
-          .hero-main-card {
-            padding: 32px 20px 72px !important;
+          .hero-main-title {
+            font-size: 2.1rem;
+          }
+          .hero-buy-now-button {
+            padding: 11px 28px;
+            font-size: 0.9rem;
           }
         }
       `}</style>

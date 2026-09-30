@@ -33,7 +33,96 @@ export default function HomeCMS() {
         api.home.get(),
         api.products.getAll()
       ]);
-      if (homeRes.success) setHomeData(homeRes.data);
+      if (homeRes.success) {
+        const data = homeRes.data;
+        if (!data.heroSection || !data.heroSection.products || data.heroSection.products.length === 0) {
+          data.heroSection = {
+            enabled: true,
+            eyebrow: 'PREMIUM NUTS',
+            headingLine1: 'PURE GOODNESS',
+            headingLine2: 'IN EVERY BITE',
+            description: 'Naturally sourced, carefully selected, for a healthier tomorrow.',
+            ctaText: 'EXPLORE PRODUCTS',
+            ctaLink: '/shop',
+            backgroundImage: '/images/hero_forest_stage.jpg',
+            rotationTiming: 5,
+            badgeText: 'PREMIUM QUALITY',
+            products: [
+              {
+                name: 'Fresh Dates',
+                subName: 'Royal Madinah & Saudi Harvest',
+                headline: 'Start Your Day With Our Fresh Dates.',
+                headingLine1: 'Start Your Day With Our',
+                headingLine2: 'Fresh Dates.',
+                image: '/images/hero_slide_dates.jpg',
+                pouchImage: '/images/pouch_dates.jpg',
+                description: 'Naturally soft, caramel-rich, and nourishing from royal Madinah groves.',
+                ctaText: 'Buy Now',
+                link: '/product/dates',
+                order: 1,
+                isActive: true
+              },
+              {
+                name: 'Whole Cashews',
+                subName: 'Colossal W-180 • Hand-Selected',
+                headline: 'Pure Crunch In Every Bite Colossal Cashews.',
+                headingLine1: 'Pure Crunch In Every Bite',
+                headingLine2: 'Colossal Cashews.',
+                image: '/images/hero_slide_cashews.jpg',
+                pouchImage: '/images/pouch_cashew.jpg',
+                description: 'Naturally sourced, hand-sorted colossal kernels with an irresistible golden crunch.',
+                ctaText: 'Buy Now',
+                link: '/product/cashews',
+                order: 2,
+                isActive: true
+              },
+              {
+                name: 'California Almonds',
+                subName: 'Supreme Grade • 100% Raw & Natural',
+                headline: 'Sun-Drenched Vitality California Almonds.',
+                headingLine1: 'Sun-Drenched Vitality',
+                headingLine2: 'California Almonds.',
+                image: '/images/hero_slide_almonds.jpg',
+                pouchImage: '/images/pouch_almond.jpg',
+                description: 'Rich in natural Vitamin E, wholesome plant protein, and revitalizing crispness.',
+                ctaText: 'Buy Now',
+                link: '/product/almonds',
+                order: 3,
+                isActive: true
+              },
+              {
+                name: 'Persian Pistachios',
+                subName: 'Persian Akbari • Light Pink Salt Roast',
+                headline: 'Naturally Opened & Crisp Persian Pistachios.',
+                headingLine1: 'Naturally Opened & Crisp',
+                headingLine2: 'Persian Pistachios.',
+                image: '/images/hero_slide_pistachios.png',
+                pouchImage: '/images/pouch_pista.jpg',
+                description: 'Jumbo sun-dried kernels slowly dry-roasted with mineral-rich pink rock salt.',
+                ctaText: 'Buy Now',
+                link: '/product/pistachios',
+                order: 4,
+                isActive: true
+              },
+              {
+                name: 'Royal Emerald Pistachios',
+                subName: 'Emerald Harvest • Rare Caliber',
+                headline: 'The True Taste of Royal Luxury Pistachios.',
+                headingLine1: 'The True Taste of Royal',
+                headingLine2: 'Luxury Pistachios.',
+                image: '/images/hero_slide_pista_dark.jpg',
+                pouchImage: '/images/pouch_pista.jpg',
+                description: 'Vibrant emerald green kernels harvested at peak ripeness for unmatched royal aroma.',
+                ctaText: 'Buy Now',
+                link: '/product/pistachios',
+                order: 5,
+                isActive: true
+              }
+            ]
+          };
+        }
+        setHomeData(data);
+      }
       if (prodRes.success) setAllProducts(prodRes.data || []);
     } catch (err) {
       console.error(err);
@@ -45,6 +134,60 @@ export default function HomeCMS() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleHeroFieldChange = (field, value) => {
+    setHomeData((prev) => ({
+      ...prev,
+      heroSection: {
+        ...(prev.heroSection || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleAddHeroProduct = () => {
+    const newProd = {
+      name: 'Signature Royal Nuts',
+      subName: 'Handpicked Luxury Selection',
+      image: '/images/hero_stage_cashew.jpg',
+      pouchImage: '/images/pouch_cashew.jpg',
+      description: 'Naturally sourced, carefully selected, for a healthier tomorrow.',
+      link: '/shop',
+      order: ((homeData.heroSection?.products || []).length) + 1,
+      isActive: true
+    };
+    setHomeData((prev) => ({
+      ...prev,
+      heroSection: {
+        ...(prev.heroSection || {}),
+        products: [...(prev.heroSection?.products || []), newProd]
+      }
+    }));
+  };
+
+  const handleRemoveHeroProduct = (index) => {
+    const updated = [...(homeData.heroSection?.products || [])];
+    updated.splice(index, 1);
+    setHomeData((prev) => ({
+      ...prev,
+      heroSection: {
+        ...(prev.heroSection || {}),
+        products: updated
+      }
+    }));
+  };
+
+  const handleHeroProductChange = (index, field, value) => {
+    const updated = [...(homeData.heroSection?.products || [])];
+    updated[index] = { ...updated[index], [field]: value };
+    setHomeData((prev) => ({
+      ...prev,
+      heroSection: {
+        ...(prev.heroSection || {}),
+        products: updated
+      }
+    }));
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -267,134 +410,247 @@ export default function HomeCMS() {
         </div>
       )}
 
-      {/* TAB 2: Hero Slider */}
+      {/* TAB 2: Hero Section & Product Showcase */}
       {activeTab === 'hero' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.1rem', color: '#FFFFFF', fontWeight: '700' }}>
-              Hero Slides ({(homeData.heroSlides || []).length})
-            </h3>
-            <button onClick={handleAddSlide} className="admin-btn admin-btn-primary admin-btn-sm">
-              <Plus size={14} />
-              <span>Add New Slide</span>
-            </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          {/* Main Hero Header & General Settings Card */}
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <div>
+                <h3 className="admin-card-title">Editorial Hero & Stage Settings</h3>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: '0.85rem' }}>
+                  Manage the main hero typography, CTA buttons, background atmosphere, and rotation timings matching the reference design.
+                </p>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#FFFFFF' }}>
+                <input
+                  type="checkbox"
+                  checked={homeData.heroSection?.enabled ?? true}
+                  onChange={(e) => handleHeroFieldChange('enabled', e.target.checked)}
+                />
+                <span>Enable Hero Section</span>
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+              <div className="admin-form-group">
+                <label className="admin-label">Eyebrow Tagline</label>
+                <input
+                  type="text"
+                  value={homeData.heroSection?.eyebrow || ''}
+                  onChange={(e) => handleHeroFieldChange('eyebrow', e.target.value)}
+                  placeholder="e.g. PREMIUM NUTS"
+                  className="admin-input"
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label className="admin-label">Rotation Timing (Seconds)</label>
+                <input
+                  type="number"
+                  min="2"
+                  max="30"
+                  value={homeData.heroSection?.rotationTiming || 5}
+                  onChange={(e) => handleHeroFieldChange('rotationTiming', Number(e.target.value))}
+                  className="admin-input"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="admin-form-group">
+                <label className="admin-label">Hero Heading (Line 1 - White/Cream)</label>
+                <input
+                  type="text"
+                  value={homeData.heroSection?.headingLine1 || ''}
+                  onChange={(e) => handleHeroFieldChange('headingLine1', e.target.value)}
+                  placeholder="e.g. PURE GOODNESS"
+                  className="admin-input"
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label className="admin-label">Hero Heading (Line 2 - Luxury Gold)</label>
+                <input
+                  type="text"
+                  value={homeData.heroSection?.headingLine2 || ''}
+                  onChange={(e) => handleHeroFieldChange('headingLine2', e.target.value)}
+                  placeholder="e.g. IN EVERY BITE"
+                  className="admin-input"
+                />
+              </div>
+            </div>
+
+            <div className="admin-form-group">
+              <label className="admin-label">Hero Description / Subtitle</label>
+              <textarea
+                rows="2"
+                value={homeData.heroSection?.description || ''}
+                onChange={(e) => handleHeroFieldChange('description', e.target.value)}
+                placeholder="e.g. Naturally sourced, carefully selected, for a healthier tomorrow."
+                className="admin-textarea"
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+              <div className="admin-form-group">
+                <label className="admin-label">Primary CTA Button Text</label>
+                <input
+                  type="text"
+                  value={homeData.heroSection?.ctaText || ''}
+                  onChange={(e) => handleHeroFieldChange('ctaText', e.target.value)}
+                  placeholder="e.g. EXPLORE PRODUCTS"
+                  className="admin-input"
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label className="admin-label">Primary CTA Link</label>
+                <input
+                  type="text"
+                  value={homeData.heroSection?.ctaLink || ''}
+                  onChange={(e) => handleHeroFieldChange('ctaLink', e.target.value)}
+                  placeholder="e.g. /shop"
+                  className="admin-input"
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label className="admin-label">Bottom Luxury Badge Text</label>
+                <input
+                  type="text"
+                  value={homeData.heroSection?.badgeText || ''}
+                  onChange={(e) => handleHeroFieldChange('badgeText', e.target.value)}
+                  placeholder="e.g. PREMIUM QUALITY"
+                  className="admin-input"
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: '8px' }}>
+              <ImageUploadField
+                label="Hero Stage Background Image"
+                value={homeData.heroSection?.backgroundImage || ''}
+                onChange={(url) => handleHeroFieldChange('backgroundImage', url)}
+                folder="hero"
+                section="hero"
+              />
+            </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {(homeData.heroSlides || []).map((slide, idx) => (
-              <div key={idx} className="admin-card" style={{ borderLeft: '4px solid var(--admin-gold-base)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <div style={{ fontWeight: '700', color: 'var(--admin-gold-base)' }}>Slide {idx + 1}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--admin-text-muted)', fontSize: '0.8rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={slide.enabled}
-                        onChange={(e) => handleSlideChange(idx, 'enabled', e.target.checked)}
-                      />
-                      <span>Active</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSlide(idx)}
-                      className="admin-btn admin-btn-danger admin-btn-sm"
-                    >
-                      <Trash2 size={13} />
-                      <span>Remove Slide</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className="admin-form-group">
-                    <label className="admin-label">Eyebrow Badge</label>
-                    <input
-                      type="text"
-                      value={slide.eyebrow}
-                      onChange={(e) => handleSlideChange(idx, 'eyebrow', e.target.value)}
-                      className="admin-input"
-                    />
-                  </div>
-                  <ImageUploadField
-                    label="Slide Image"
-                    value={slide.image}
-                    onChange={(url) => handleSlideChange(idx, 'image', url)}
-                    folder="hero"
-                    section="hero"
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className="admin-form-group">
-                    <label className="admin-label">Headline Line 1</label>
-                    <input
-                      type="text"
-                      value={slide.line1}
-                      onChange={(e) => handleSlideChange(idx, 'line1', e.target.value)}
-                      className="admin-input"
-                    />
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-label">Headline Line 2</label>
-                    <input
-                      type="text"
-                      value={slide.line2}
-                      onChange={(e) => handleSlideChange(idx, 'line2', e.target.value)}
-                      className="admin-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="admin-form-group">
-                  <label className="admin-label">Slide Description</label>
-                  <textarea
-                    rows="2"
-                    value={slide.description}
-                    onChange={(e) => handleSlideChange(idx, 'description', e.target.value)}
-                    className="admin-textarea"
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px' }}>
-                  <div className="admin-form-group">
-                    <label className="admin-label">Button 1 Text</label>
-                    <input
-                      type="text"
-                      value={slide.button1Text}
-                      onChange={(e) => handleSlideChange(idx, 'button1Text', e.target.value)}
-                      className="admin-input"
-                    />
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-label">Button 1 Link</label>
-                    <input
-                      type="text"
-                      value={slide.button1Link}
-                      onChange={(e) => handleSlideChange(idx, 'button1Link', e.target.value)}
-                      className="admin-input"
-                    />
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-label">Button 2 Text</label>
-                    <input
-                      type="text"
-                      value={slide.button2Text}
-                      onChange={(e) => handleSlideChange(idx, 'button2Text', e.target.value)}
-                      className="admin-input"
-                    />
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-label">Button 2 Link</label>
-                    <input
-                      type="text"
-                      value={slide.button2Link}
-                      onChange={(e) => handleSlideChange(idx, 'button2Link', e.target.value)}
-                      className="admin-input"
-                    />
-                  </div>
-                </div>
+          {/* Multiple Hero Products Card */}
+          <div className="admin-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h3 className="admin-card-title">
+                  Showcase Hero Products ({(homeData.heroSection?.products || []).length})
+                </h3>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: '0.85rem' }}>
+                  Manage the luxury packaging renders rotated on the foreground pedestal table.
+                </p>
               </div>
-            ))}
+              <button
+                type="button"
+                onClick={handleAddHeroProduct}
+                className="admin-btn admin-btn-primary admin-btn-sm"
+              >
+                <Plus size={14} />
+                <span>Add Product</span>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {(homeData.heroSection?.products || []).map((product, idx) => (
+                <div key={idx} className="admin-card" style={{ borderLeft: '4px solid var(--admin-gold-base)', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{ fontWeight: '700', color: 'var(--admin-gold-base)' }}>
+                      Product {idx + 1}: {product.name || 'Untitled Product'}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--admin-text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={product.isActive ?? true}
+                          onChange={(e) => handleHeroProductChange(idx, 'isActive', e.target.checked)}
+                        />
+                        <span>Active</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveHeroProduct(idx)}
+                        className="admin-btn admin-btn-danger admin-btn-sm"
+                      >
+                        <Trash2 size={13} />
+                        <span>Remove</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '16px' }}>
+                    <div className="admin-form-group">
+                      <label className="admin-label">Product Name</label>
+                      <input
+                        type="text"
+                        value={product.name || ''}
+                        onChange={(e) => handleHeroProductChange(idx, 'name', e.target.value)}
+                        placeholder="e.g. Signature Cashew W-180"
+                        className="admin-input"
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-label">Display Order</label>
+                      <input
+                        type="number"
+                        value={product.order ?? idx + 1}
+                        onChange={(e) => handleHeroProductChange(idx, 'order', Number(e.target.value))}
+                        className="admin-input"
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-label">Target Link</label>
+                      <input
+                        type="text"
+                        value={product.link || ''}
+                        onChange={(e) => handleHeroProductChange(idx, 'link', e.target.value)}
+                        placeholder="e.g. /product/cashews"
+                        className="admin-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="admin-form-group">
+                      <label className="admin-label">Product Subtitle / Details</label>
+                      <input
+                        type="text"
+                        value={product.subName || ''}
+                        onChange={(e) => handleHeroProductChange(idx, 'subName', e.target.value)}
+                        placeholder="e.g. Colossal W-180 • Premium Nuts"
+                        className="admin-input"
+                      />
+                    </div>
+                    <ImageUploadField
+                      label="Product Stage Image"
+                      value={product.image || ''}
+                      onChange={(url) => handleHeroProductChange(idx, 'image', url)}
+                      folder="hero"
+                      section="hero"
+                    />
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label className="admin-label">Product Description / Highlights</label>
+                    <textarea
+                      rows="2"
+                      value={product.description || ''}
+                      onChange={(e) => handleHeroProductChange(idx, 'description', e.target.value)}
+                      placeholder="e.g. Naturally sourced, carefully selected, for a healthier tomorrow."
+                      className="admin-textarea"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

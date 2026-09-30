@@ -12,6 +12,37 @@ const homePageSchema = new mongoose.Schema(
       ],
       trackOrderText: { type: String, default: 'Track Order' }
     },
+    heroSection: {
+      enabled: { type: Boolean, default: true },
+      eyebrow: { type: String, default: 'PREMIUM NUTS' },
+      headingLine1: { type: String, default: 'PURE GOODNESS' },
+      headingLine2: { type: String, default: 'IN EVERY BITE' },
+      description: {
+        type: String,
+        default: 'Naturally sourced, carefully selected, for a healthier tomorrow.'
+      },
+      ctaText: { type: String, default: 'EXPLORE PRODUCTS' },
+      ctaLink: { type: String, default: '/shop' },
+      backgroundImage: { type: String, default: '/images/hero_forest_stage.jpg' },
+      rotationTiming: { type: Number, default: 5 },
+      badgeText: { type: String, default: 'PREMIUM QUALITY' },
+      products: [
+        {
+          name: { type: String, default: '' },
+          subName: { type: String, default: '' },
+          headline: { type: String, default: '' },
+          headingLine1: { type: String, default: '' },
+          headingLine2: { type: String, default: '' },
+          image: { type: String, default: '' },
+          pouchImage: { type: String, default: '' },
+          description: { type: String, default: '' },
+          ctaText: { type: String, default: 'Buy Now' },
+          link: { type: String, default: '/shop' },
+          order: { type: Number, default: 0 },
+          isActive: { type: Boolean, default: true }
+        }
+      ]
+    },
     heroSlides: [
       {
         eyebrow: { type: String, default: '' },
