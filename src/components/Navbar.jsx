@@ -37,7 +37,6 @@ export default function Navbar({ onOpenSearch }) {
     { name: 'HOME', path: '/' },
     { name: 'SHOP', path: '/shop' },
     { name: 'OUR STORY', path: '/our-story' },
-    { name: 'WHOLESALE', path: '/wholesale' },
     { name: 'CONTACT', path: '/contact' }
   ];
 

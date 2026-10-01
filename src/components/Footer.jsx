@@ -129,11 +129,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/wholesale" style={{ fontSize: '0.875rem' }}>
-                  Wholesale &amp; Gifting
-                </Link>
-              </li>
-              <li>
                 <Link to="/contact" style={{ fontSize: '0.875rem' }}>
                   Contact Us
                 </Link>

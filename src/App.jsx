@@ -70,7 +70,7 @@ export default function App() {
             <Route path="/shop/:category" element={<Shop />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/our-story" element={<OurStory />} />
-            <Route path="/wholesale" element={<Wholesale />} />
+            <Route path="/wholesale" element={<Navigate to="/" replace />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/wishlist" element={<Wishlist />} />

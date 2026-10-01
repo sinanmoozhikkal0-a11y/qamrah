@@ -32,7 +32,7 @@ export default function Contact() {
     },
     {
       q: 'Do you offer custom corporate gift hampers for Diwali and Eid?',
-      a: 'Yes, we curate custom wooden lacquer boxes with personalized company branding, engraved greeting cards, and bespoke dry fruit selections. Please check our Wholesale page for bulk enquiries.'
+      a: 'Yes, we curate custom wooden lacquer boxes with personalized company branding, engraved greeting cards, and bespoke dry fruit selections. Please reach out through our contact form for custom and corporate gifting enquiries.'
     },
     {
       q: 'What is your return & freshness guarantee policy?',
