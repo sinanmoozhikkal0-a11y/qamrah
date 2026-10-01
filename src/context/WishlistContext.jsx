@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from './ToastContext';
 
@@ -7,6 +9,7 @@ const WISHLIST_STORAGE_KEY = 'qamrah_wishlist_items_v1';
 
 export function WishlistProvider({ children }) {
   const [wishlistItems, setWishlistItems] = useState(() => {
+    if (typeof window === 'undefined') return [];
     try {
       const saved = localStorage.getItem(WISHLIST_STORAGE_KEY);
       return saved ? JSON.parse(saved) : [];

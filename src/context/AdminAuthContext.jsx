@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
 
@@ -5,6 +7,7 @@ const AdminAuthContext = createContext();
 
 export function AdminAuthProvider({ children }) {
   const [admin, setAdmin] = useState(() => {
+    if (typeof window === 'undefined') return null;
     try {
       const saved = localStorage.getItem('qamrah_admin_user');
       return saved ? JSON.parse(saved) : null;
@@ -13,7 +16,7 @@ export function AdminAuthProvider({ children }) {
     }
   });
 
-  const [token, setToken] = useState(() => localStorage.getItem('qamrah_admin_token') || null);
+  const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('qamrah_admin_token') || null : null));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

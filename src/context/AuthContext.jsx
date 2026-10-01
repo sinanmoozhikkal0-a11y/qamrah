@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from './ToastContext';
 
@@ -7,6 +9,7 @@ const AUTH_STORAGE_KEY = 'qamrah_auth_user_v1';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
+    if (typeof window === 'undefined') return null;
     try {
       const saved = localStorage.getItem(AUTH_STORAGE_KEY);
       return saved ? JSON.parse(saved) : null;

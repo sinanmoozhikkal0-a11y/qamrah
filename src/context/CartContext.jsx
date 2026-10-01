@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from './ToastContext';
 import { api } from '../services/api';
@@ -10,6 +12,7 @@ const DEFAULT_STANDARD_SHIPPING_FEE = 49;
 
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(() => {
+    if (typeof window === 'undefined') return [];
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
       return saved ? JSON.parse(saved) : [];

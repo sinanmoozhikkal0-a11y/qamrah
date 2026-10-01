@@ -21,7 +21,7 @@ import { useAdminAuth } from '../../context/AdminAuthContext';
 import SEO from '../../components/SEO';
 import '../admin.css';
 
-export default function AdminLayout() {
+export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { logout } = useAdminAuth();
   const navigate = useNavigate();
@@ -131,7 +131,7 @@ export default function AdminLayout() {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
         <main className="admin-content">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>
