@@ -84,10 +84,12 @@ export default function SearchModal({ isOpen, onClose }) {
 
   const categoryOptions = [
     { id: 'all', label: 'All' },
-    ...categories.map((c) => ({
-      id: c.slug,
-      label: c.name
-    }))
+    ...categories
+      .filter((c) => c.slug !== 'all' && c.id !== 'all')
+      .map((c) => ({
+        id: c.slug || c.id,
+        label: c.name
+      }))
   ];
 
   return (
