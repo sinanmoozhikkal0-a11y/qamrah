@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import HomePage from '../models/HomePage.js';
 import { sendResponse } from '../utils/sendResponse.js';
 
@@ -88,16 +89,23 @@ const defaultHeroSection = {
 
 export const getHomePageData = async (_req, res) => {
   try {
-    let home = await HomePage.findOne();
+    let home = null;
+    if (mongoose.connection.readyState === 1) {
+      home = await HomePage.findOne();
+      if (!home) {
+        home = await HomePage.create({ heroSection: defaultHeroSection });
+      } else if (!home.heroSection || !home.heroSection.products || home.heroSection.products.length === 0) {
+        home.heroSection = defaultHeroSection;
+        await home.save();
+      }
+    }
     if (!home) {
-      home = await HomePage.create({ heroSection: defaultHeroSection });
-    } else if (!home.heroSection || !home.heroSection.products || home.heroSection.products.length === 0) {
-      home.heroSection = defaultHeroSection;
-      await home.save();
+      home = { heroSection: defaultHeroSection };
     }
     return sendResponse(res, 200, true, 'Home page data retrieved.', home);
   } catch (err) {
-    return sendResponse(res, 500, false, err.message);
+    console.warn('[Home Controller Warning]:', err.message);
+    return sendResponse(res, 200, true, 'Home page data retrieved (fallback).', { heroSection: defaultHeroSection });
   }
 };
 

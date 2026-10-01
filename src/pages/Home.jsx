@@ -10,6 +10,7 @@ import QuickViewModal from '../components/QuickViewModal';
 import SEO from '../components/SEO';
 import { generateOrganizationSchema, generateWebSiteSchema } from '../utils/structuredData';
 import { api } from '../services/api';
+import { PRODUCTS } from '../data/products';
 
 export default function Home() {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
@@ -33,11 +34,11 @@ export default function Home() {
         if (prodRes.success && prodRes.data && prodRes.data.length > 0) {
           setBestsellers(prodRes.data.slice(0, 5));
         } else {
-          setBestsellers([]);
+          setBestsellers(PRODUCTS.slice(0, 5));
         }
       } catch (err) {
         console.error('Failed to load home data from backend:', err);
-        setBestsellers([]);
+        setBestsellers(PRODUCTS.slice(0, 5));
       } finally {
         setLoadingBestsellers(false);
       }

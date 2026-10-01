@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, X, ArrowRight, Star, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
+import { PRODUCTS, CATEGORIES } from '../data/products';
 
 export default function SearchModal({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState(PRODUCTS);
+  const [categories, setCategories] = useState(CATEGORIES);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
 
@@ -24,14 +25,20 @@ export default function SearchModal({ isOpen, onClose }) {
         api.products.getAll({ status: 'active' }),
         api.categories.getAll()
       ]).then(([prodRes, catRes]) => {
-        if (prodRes.success && prodRes.data) {
+        if (prodRes.success && prodRes.data && prodRes.data.length > 0) {
           setProducts(prodRes.data);
+        } else {
+          setProducts(PRODUCTS);
         }
-        if (catRes.success && catRes.data) {
+        if (catRes.success && catRes.data && catRes.data.length > 0) {
           setCategories(catRes.data);
+        } else {
+          setCategories(CATEGORIES);
         }
       }).catch((err) => {
         console.error('Failed to load search catalog from backend:', err);
+        setProducts(PRODUCTS);
+        setCategories(CATEGORIES);
       }).finally(() => {
         setLoading(false);
       });

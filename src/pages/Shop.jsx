@@ -6,6 +6,7 @@ import QuickViewModal from '../components/QuickViewModal';
 import SEO from '../components/SEO';
 import { generateBreadcrumbSchema } from '../utils/structuredData';
 import { api } from '../services/api';
+import { PRODUCTS, CATEGORIES } from '../data/products';
 
 export default function Shop() {
   const { category: urlCategory } = useParams();
@@ -28,10 +29,10 @@ export default function Shop() {
           api.products.getAll(),
           api.categories.getAll()
         ]);
-        if (prodRes.success && prodRes.data) {
+        if (prodRes.success && prodRes.data && prodRes.data.length > 0) {
           setProductsList(prodRes.data);
         } else {
-          setProductsList([]);
+          setProductsList(PRODUCTS);
         }
         if (catRes.success && catRes.data && catRes.data.length > 0) {
           setCategoriesList([
@@ -43,10 +44,13 @@ export default function Shop() {
               image: c.image
             }))
           ]);
+        } else {
+          setCategoriesList(CATEGORIES);
         }
       } catch (err) {
         console.error('Failed to load products from backend:', err);
-        setProductsList([]);
+        setProductsList(PRODUCTS);
+        setCategoriesList(CATEGORIES);
       } finally {
         setLoading(false);
       }
