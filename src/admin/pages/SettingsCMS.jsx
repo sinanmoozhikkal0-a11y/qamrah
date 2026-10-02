@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Save, Truck, MessageCircle, ShieldCheck } from 'lucide-react';
+import { Save, Truck, MessageCircle } from 'lucide-react';
 import { api } from '../../services/api';
 import SaveToast from '../components/SaveToast';
 

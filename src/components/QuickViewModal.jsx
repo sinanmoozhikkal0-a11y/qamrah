@@ -44,7 +44,7 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
       setQuantity(1);
       setActiveImageIndex(0);
     }
-  }, [product?.slug, product?.id, product?._id, packDesigns]);
+  }, [product, packDesigns]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {

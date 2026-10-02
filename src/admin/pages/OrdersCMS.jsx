@@ -6,22 +6,13 @@ import {
   Eye,
   Printer,
   Phone,
-  MessageCircle,
-  Clock,
-  CheckCircle,
-  Truck,
-  XCircle,
-  Calendar,
-  User,
-  MapPin,
-  Sparkles
+  MessageCircle
 } from 'lucide-react';
 import { api } from '../../services/api';
 import SaveToast from '../components/SaveToast';
 
 export default function OrdersCMS() {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -31,30 +22,27 @@ export default function OrdersCMS() {
 
   const [searchParams] = useSearchParams();
 
-  const loadOrders = async () => {
-    setLoading(true);
-    try {
-      const res = await api.orders.getAll({ status: statusFilter === 'all' ? '' : statusFilter });
-      if (res.success) {
-        setOrders(res.data || []);
-
-        // If view param exists, open that order
-        const viewId = searchParams.get('view');
-        if (viewId && res.data) {
-          const matched = res.data.find((o) => o._id === viewId || o.orderId === viewId);
-          if (matched) setSelectedOrder(matched);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const res = await api.orders.getAll({ status: statusFilter === 'all' ? '' : statusFilter });
+        if (res.success) {
+          setOrders(res.data || []);
+
+          // If view param exists, open that order
+          const viewId = searchParams.get('view');
+          if (viewId && res.data) {
+            const matched = res.data.find((o) => o._id === viewId || o.orderId === viewId);
+            if (matched) setSelectedOrder(matched);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     loadOrders();
-  }, [statusFilter]);
+  }, [statusFilter, searchParams]);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     setStatusUpdating(true);

@@ -51,7 +51,7 @@ export const defaultPackDesigns = [
     name: 'Corporate Gift Pack',
     packType: 'Custom Hamper',
     packSize: 'Executive Edition',
-    packImage: '/images/gift_hamper_1788328179938.jpg',
+    packImage: '/images/gift_hamper.jpg',
     frontImage: '/images/gift_hamper.jpg',
     backImage: '/images/gift_hamper.jpg',
     description: 'Bespoke corporate luxury hamper with customized brass tins and personalized greeting parchment.',

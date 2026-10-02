@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Home,
   Save,
   Plus,
   Trash2,
-  Sparkles,
-  Award,
-  Layers,
-  ShoppingBag,
-  BookOpen,
-  Mail,
-  CheckCircle,
   Eye
 } from 'lucide-react';
 import { api } from '../../services/api';
@@ -20,7 +12,6 @@ import ImageUploadField from '../components/ImageUploadField';
 export default function HomeCMS() {
   const [activeTab, setActiveTab] = useState('hero');
   const [homeData, setHomeData] = useState(null);
-  const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -29,10 +20,7 @@ export default function HomeCMS() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [homeRes, prodRes] = await Promise.all([
-        api.home.get(),
-        api.products.getAll()
-      ]);
+      const homeRes = await api.home.get();
       if (homeRes.success) {
         const data = homeRes.data;
         if (!data.heroSection || !data.heroSection.products || data.heroSection.products.length === 0) {
@@ -203,39 +191,6 @@ export default function HomeCMS() {
     } finally {
       setSaving(false);
     }
-  };
-
-  // Helper slide modifiers
-  const handleAddSlide = () => {
-    const newSlide = {
-      eyebrow: 'NEW COLLECTION • ROYAL SELECTION',
-      line1: 'Royal Harvest,',
-      line2: 'Nature’s Best.',
-      description: 'Handpicked premium nuts delivered fresh in signature preservation packaging.',
-      image: '/images/hero_cashew_render.jpg',
-      button1Text: 'DISCOVER COLLECTION',
-      button1Link: '/shop',
-      button2Text: 'VIEW PRODUCT',
-      button2Link: '/shop',
-      enabled: true,
-      order: (homeData.heroSlides?.length || 0) + 1
-    };
-    setHomeData({
-      ...homeData,
-      heroSlides: [...(homeData.heroSlides || []), newSlide]
-    });
-  };
-
-  const handleRemoveSlide = (index) => {
-    const updated = [...homeData.heroSlides];
-    updated.splice(index, 1);
-    setHomeData({ ...homeData, heroSlides: updated });
-  };
-
-  const handleSlideChange = (index, field, value) => {
-    const updated = [...homeData.heroSlides];
-    updated[index][field] = value;
-    setHomeData({ ...homeData, heroSlides: updated });
   };
 
   if (loading || !homeData) {

@@ -54,7 +54,7 @@ export const loginAdmin = async (req, res) => {
       try {
         admin.lastLogin = new Date();
         await admin.save();
-      } catch (_) {}
+      } catch {}
 
       const token = jwt.sign(
         { id: admin._id, username: admin.username, role: admin.role },

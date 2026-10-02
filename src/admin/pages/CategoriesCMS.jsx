@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import SaveToast from '../components/SaveToast';
@@ -7,7 +7,6 @@ import ImageUploadField from '../components/ImageUploadField';
 
 export default function CategoriesCMS() {
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -25,7 +24,6 @@ export default function CategoriesCMS() {
   const [formData, setFormData] = useState(initialForm);
 
   const loadCategories = async () => {
-    setLoading(true);
     try {
       const res = await api.categories.getAll();
       if (res.success) {
@@ -33,8 +31,6 @@ export default function CategoriesCMS() {
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 

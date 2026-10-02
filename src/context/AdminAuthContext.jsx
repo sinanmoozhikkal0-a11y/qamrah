@@ -19,6 +19,12 @@ export function AdminAuthProvider({ children }) {
   const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('qamrah_admin_token') || null : null));
   const [loading, setLoading] = useState(true);
 
+  const handleLogout = () => {
+    api.auth.logout();
+    setToken(null);
+    setAdmin(null);
+  };
+
   useEffect(() => {
     const verifyToken = async () => {
       if (token) {
@@ -50,12 +56,6 @@ export function AdminAuthProvider({ children }) {
       return { success: true };
     }
     return { success: false, message: res.message || 'Login failed' };
-  };
-
-  const handleLogout = () => {
-    api.auth.logout();
-    setToken(null);
-    setAdmin(null);
   };
 
   return (

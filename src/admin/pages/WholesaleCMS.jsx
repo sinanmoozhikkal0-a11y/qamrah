@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Save, Mail, Phone, CheckCircle, Trash2, Edit2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import SaveToast from '../components/SaveToast';
@@ -8,14 +8,12 @@ export default function WholesaleCMS() {
   const [activeTab, setActiveTab] = useState('enquiries'); // 'enquiries' | 'content'
   const [wholesaleData, setWholesaleData] = useState(null);
   const [enquiries, setEnquiries] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
 
   const loadAll = async () => {
-    setLoading(true);
     try {
       const [pageRes, enqRes] = await Promise.all([
         api.wholesale.get(),
@@ -25,8 +23,6 @@ export default function WholesaleCMS() {
       if (enqRes.success) setEnquiries(enqRes.data || []);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -130,7 +126,6 @@ export default function WholesaleCMS() {
               <tbody>
                 {enquiries.length > 0 ? (
                   enquiries.map((enq) => {
-                    const statusClass = enq.status.toLowerCase();
                     return (
                       <tr key={enq._id}>
                         <td>

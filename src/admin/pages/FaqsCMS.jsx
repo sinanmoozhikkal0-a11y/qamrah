@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import SaveToast from '../components/SaveToast';
 
 export default function FaqsCMS() {
   const [faqs, setFaqs] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFaq, setEditingFaq] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -23,14 +22,11 @@ export default function FaqsCMS() {
   const [formData, setFormData] = useState(initialForm);
 
   const loadFaqs = async () => {
-    setLoading(true);
     try {
       const res = await api.faqs.getAll();
       if (res.success) setFaqs(res.data || []);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 

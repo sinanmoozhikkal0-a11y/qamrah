@@ -62,7 +62,7 @@ export default function Contact() {
             }))
           );
         }
-      } catch (_err) {
+      } catch {
         // keep fallback
       }
     };
@@ -81,7 +81,7 @@ export default function Contact() {
       } else {
         addToast(res.message || 'Failed to send message. Please try again.', 'error');
       }
-    } catch (_err) {
+    } catch {
       // Offline fallback
       setIsSubmitted(true);
       addToast('Thank you for contacting QAMRAH. Our concierge will get back to you shortly.');
@@ -316,9 +316,9 @@ export default function Contact() {
                     />
                   </div>
 
-                  <button type="submit" className="btn btn-primary btn-lg" style={{ marginTop: '10px' }}>
+                  <button type="submit" disabled={loading} className="btn btn-primary btn-lg" style={{ marginTop: '10px' }}>
                     <Send size={16} />
-                    <span>TRANSMIT MESSAGE</span>
+                    <span>{loading ? 'TRANSMITTING...' : 'TRANSMIT MESSAGE'}</span>
                   </button>
                 </form>
               </div>

@@ -4,8 +4,7 @@ import { Link } from 'react-router-dom';
 export default function Logo({
   size = 'medium',
   isLink = true,
-  variant = 'horizontal',
-  showSubtext = true
+  variant = 'horizontal'
 }) {
   const heightMap = {
     small: '38px',

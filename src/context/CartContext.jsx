@@ -36,7 +36,7 @@ export function CartProvider({ children }) {
           if (res.data.shippingCharge !== undefined) setShippingFee(Number(res.data.shippingCharge));
           if (res.data.freeShippingThreshold !== undefined) setFreeThreshold(Number(res.data.freeShippingThreshold));
         }
-      } catch (e) {
+      } catch {
         // use fallback defaults
       }
     };

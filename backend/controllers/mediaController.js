@@ -4,7 +4,6 @@ import mongoose from 'mongoose';
 import Media from '../models/Media.js';
 import { sendResponse } from '../utils/sendResponse.js';
 import {
-  cloudinary,
   isCloudinaryConfigured,
   uploadImageToCloudinary,
   deleteImageFromCloudinary
@@ -275,7 +274,7 @@ export const replaceMedia = async (req, res) => {
     } else if (oldStorageType === 'local' && oldUrl) {
       const oldLocalPath = path.join(process.cwd(), 'uploads', path.basename(oldUrl));
       if (fs.existsSync(oldLocalPath)) {
-        try { fs.unlinkSync(oldLocalPath); } catch (_) {}
+        try { fs.unlinkSync(oldLocalPath); } catch {}
       }
     }
 
@@ -284,7 +283,7 @@ export const replaceMedia = async (req, res) => {
     return sendResponse(res, 500, false, 'Failed to replace image: ' + err.message);
   } finally {
     if (filePath && fs.existsSync(filePath)) {
-      try { fs.unlinkSync(filePath); } catch (_) {}
+      try { fs.unlinkSync(filePath); } catch {}
     }
   }
 };
@@ -326,7 +325,7 @@ export const deleteMedia = async (req, res) => {
       } else if (media.storageType === 'local') {
         const localPath = path.join(process.cwd(), 'uploads', path.basename(media.url));
         if (fs.existsSync(localPath)) {
-          try { fs.unlinkSync(localPath); } catch (_) {}
+          try { fs.unlinkSync(localPath); } catch {}
         }
       }
 

@@ -46,7 +46,7 @@ export default function OurStory() {
         if (res.success && res.data) {
           setStory(res.data);
         }
-      } catch (_err) {
+      } catch {
         // preserve fallback
       }
     };

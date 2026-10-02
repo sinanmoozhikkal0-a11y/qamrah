@@ -121,7 +121,7 @@ export default function Hero({ onQuickView: _onQuickView }) {
             });
           }
         }
-      } catch (_err) {
+      } catch {
         // Fallback to defaults
       }
     };

@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  const login = (email, password, rememberMe = true) => {
+  const login = (email, _password, _rememberMe = true) => {
     // Generate clean user profile from email if not preset
     const extractedName = email.split('@')[0];
     const formattedName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1);
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
     return { success: true, user: loggedInUser };
   };
 
-  const register = (name, email, password) => {
+  const register = (name, email, _password) => {
     const newUser = {
       name: name,
       email: email,

@@ -11,7 +11,6 @@ import {
   Mail,
   Eye,
   ArrowRight,
-  TrendingUp,
   RefreshCw
 } from 'lucide-react';
 import { api } from '../../services/api';

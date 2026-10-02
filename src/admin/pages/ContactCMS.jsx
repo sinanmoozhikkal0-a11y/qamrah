@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, Clock, Save, Trash2, CheckCircle } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import SaveToast from '../components/SaveToast';
@@ -8,14 +8,12 @@ export default function ContactCMS() {
   const [activeTab, setActiveTab] = useState('messages'); // 'messages' | 'content'
   const [contactData, setContactData] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
 
   const loadAll = async () => {
-    setLoading(true);
     try {
       const [pageRes, msgRes] = await Promise.all([
         api.contact.get(),
@@ -25,8 +23,6 @@ export default function ContactCMS() {
       if (msgRes.success) setMessages(msgRes.data || []);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 

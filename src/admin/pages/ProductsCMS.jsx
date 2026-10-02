@@ -4,13 +4,7 @@ import {
   Plus,
   Search,
   Edit2,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  Eye,
-  Star,
-  Sparkles,
-  Upload
+  Trash2
 } from 'lucide-react';
 import { api } from '../../services/api';
 import ConfirmModal from '../components/ConfirmModal';
@@ -20,7 +14,6 @@ import ImageUploadField from '../components/ImageUploadField';
 export default function ProductsCMS() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
 
@@ -59,7 +52,6 @@ export default function ProductsCMS() {
   const [formData, setFormData] = useState(initialForm);
 
   const loadData = async () => {
-    setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
         api.products.getAll({ status: '' }),
@@ -69,8 +61,6 @@ export default function ProductsCMS() {
       if (catRes.success) setCategories(catRes.data || []);
     } catch (err) {
       console.error('Failed to load products', err);
-    } finally {
-      setLoading(false);
     }
   };
 

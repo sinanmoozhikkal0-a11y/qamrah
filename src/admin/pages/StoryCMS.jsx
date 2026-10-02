@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Save, Sparkles, Award } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { api } from '../../services/api';
 import SaveToast from '../components/SaveToast';
 

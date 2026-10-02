@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Plus, Edit2, Trash2, CheckCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import SaveToast from '../components/SaveToast';
@@ -7,7 +7,6 @@ import ImageUploadField from '../components/ImageUploadField';
 
 export default function PackDesignCMS() {
   const [packDesigns, setPackDesigns] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPack, setEditingPack] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -29,7 +28,6 @@ export default function PackDesignCMS() {
   const [formData, setFormData] = useState(initialForm);
 
   const loadPackDesigns = async () => {
-    setLoading(true);
     try {
       const res = await api.packDesigns.getAll();
       if (res.success) {
@@ -37,8 +35,6 @@ export default function PackDesignCMS() {
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 

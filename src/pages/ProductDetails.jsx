@@ -85,7 +85,7 @@ export default function ProductDetails() {
                   .slice(0, 4);
                 setRelatedProducts(filteredRel);
               }
-            } catch (_) {
+            } catch {
               setRelatedProducts([]);
             }
           }

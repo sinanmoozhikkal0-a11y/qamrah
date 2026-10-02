@@ -37,7 +37,7 @@ export default function Wholesale() {
         if (res.success && res.data) {
           setWholesaleData(res.data);
         }
-      } catch (_err) {
+      } catch {
         // preserve fallback
       }
     };
@@ -55,7 +55,7 @@ export default function Wholesale() {
       } else {
         addToast(res.message || 'Failed to submit enquiry. Please try again.', 'error');
       }
-    } catch (_err) {
+    } catch {
       // Fallback submission success for offline/demo
       setIsSubmitted(true);
       addToast('Your wholesale enquiry has been submitted. Our B2B concierge will contact you within 24 hours.');
@@ -382,11 +382,12 @@ export default function Wholesale() {
 
                 <button
                   type="submit"
+                  disabled={loading}
                   className="btn btn-primary btn-lg"
                   style={{ width: '100%', marginTop: '10px' }}
                 >
                   <Send size={16} />
-                  <span>SUBMIT WHOLESALE ENQUIRY</span>
+                  <span>{loading ? 'SUBMITTING...' : 'SUBMIT WHOLESALE ENQUIRY'}</span>
                 </button>
               </form>
             </div>

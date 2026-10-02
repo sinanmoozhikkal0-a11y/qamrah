@@ -30,7 +30,7 @@ export const protectAdmin = async (req, res, next) => {
           if (!admin) {
             admin = await Admin.findOne({ username: 'QAMRAH' }).select('-password');
           }
-        } catch (_) {}
+        } catch {}
       }
 
       req.admin = admin || {
@@ -55,7 +55,7 @@ export const protectAdmin = async (req, res, next) => {
 
     req.admin = admin;
     next();
-  } catch (error) {
+  } catch {
     return sendResponse(res, 401, false, 'Invalid or expired token.');
   }
 };

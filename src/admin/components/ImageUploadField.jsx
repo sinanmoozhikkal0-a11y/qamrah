@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Upload, X, Check, Copy, Loader2, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import React, { useState, useRef, useId } from 'react';
+import { Upload, X, Check, Copy, Loader2, Image as ImageIcon } from 'lucide-react';
 import { api } from '../../services/api';
 
 export default function ImageUploadField({
@@ -12,6 +12,8 @@ export default function ImageUploadField({
   helpText = '',
   section = 'general'
 }) {
+  const generatedId = useId();
+  const inputId = label ? `file-upload-${label.replace(/\s+/g, '-').toLowerCase()}` : `file-upload-${generatedId}`;
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -150,11 +152,11 @@ export default function ImageUploadField({
                 onChange={handleFileChange}
                 disabled={uploading}
                 style={{ display: 'none' }}
-                id={`file-upload-${label?.replace(/\s+/g, '-').toLowerCase() || Math.random()}`}
+                id={inputId}
               />
 
               <label
-                htmlFor={`file-upload-${label?.replace(/\s+/g, '-').toLowerCase() || Math.random()}`}
+                htmlFor={inputId}
                 className="admin-btn admin-btn-primary admin-btn-sm"
                 style={{
                   cursor: uploading ? 'not-allowed' : 'pointer',

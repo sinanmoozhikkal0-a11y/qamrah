@@ -76,7 +76,7 @@ export const connectDB = async () => {
       });
       console.log(`[MongoDB] Connected to local MongoDB at: ${conn.connection.host}`);
       return conn;
-    } catch (_localErr) {
+    } catch {
       console.log('[MongoDB] Local MongoDB server not detected. Running with resilient memory store.');
       return null;
     }
