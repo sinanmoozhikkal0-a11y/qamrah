@@ -48,7 +48,7 @@ export default function Shop() {
           setCategoriesList(CATEGORIES);
         }
       } catch (err) {
-        console.error('Failed to load products from backend:', err);
+        console.error('Failed to load products:', err);
         setProductsList(PRODUCTS);
         setCategoriesList(CATEGORIES);
       } finally {

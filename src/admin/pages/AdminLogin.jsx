@@ -27,7 +27,7 @@ export default function AdminLogin() {
         setError(result.message || 'Invalid username or password.');
       }
     } catch (err) {
-      setError(err.message || 'Failed to connect to backend server.');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

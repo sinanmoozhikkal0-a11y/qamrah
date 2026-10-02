@@ -37,7 +37,7 @@ export default function Home() {
           setBestsellers(PRODUCTS.slice(0, 5));
         }
       } catch (err) {
-        console.error('Failed to load home data from backend:', err);
+        console.error('Failed to load home data:', err);
         setBestsellers(PRODUCTS.slice(0, 5));
       } finally {
         setLoadingBestsellers(false);

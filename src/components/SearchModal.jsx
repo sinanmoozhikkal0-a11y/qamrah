@@ -19,7 +19,7 @@ export default function SearchModal({ isOpen, onClose }) {
       }, 100);
       document.body.style.overflow = 'hidden';
 
-      // Load products and categories from backend API
+      // Load products and categories
       setLoading(true);
       Promise.all([
         api.products.getAll({ status: 'active' }),
@@ -36,7 +36,7 @@ export default function SearchModal({ isOpen, onClose }) {
           setCategories(CATEGORIES);
         }
       }).catch((err) => {
-        console.error('Failed to load search catalog from backend:', err);
+        console.error('Failed to load search catalog:', err);
         setProducts(PRODUCTS);
         setCategories(CATEGORIES);
       }).finally(() => {
@@ -65,7 +65,7 @@ export default function SearchModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  // Filter products directly from backend list
+  // Filter products directly from catalog
   const filteredProducts = products.filter((item) => {
     const matchesCategory =
       selectedCategory === 'all' || item.category === selectedCategory;

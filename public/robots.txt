@@ -19,7 +19,7 @@ Disallow: /login
 Disallow: /register
 Disallow: /cart
 Disallow: /wishlist
-Disallow: /api/*
+
 
 # XML Sitemap
 Sitemap: https://qamrahnuts.com/sitemap.xml

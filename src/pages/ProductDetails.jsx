@@ -74,7 +74,7 @@ export default function ProductDetails() {
             '250g'
           );
 
-          // Fetch related products in the same category from live backend API
+          // Fetch related products in the same category
           if (currentProd.category) {
             try {
               const relRes = await api.products.getAll({ category: currentProd.category, status: 'active' });
@@ -101,7 +101,7 @@ export default function ProductDetails() {
           }
         }
       } catch (err) {
-        console.error('Failed to load product details from backend:', err);
+        console.error('Failed to load product details:', err);
         setProduct(null);
       } finally {
         setLoading(false);

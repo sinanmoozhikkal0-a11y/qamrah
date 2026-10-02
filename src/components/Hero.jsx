@@ -95,7 +95,7 @@ export default function Hero({ onQuickView: _onQuickView }) {
   const [touchStartX, setTouchStartX] = useState(null);
   const slideTimerRef = useRef(null);
 
-  // Fetch dynamic hero configuration from backend CMS
+  // Fetch dynamic hero configuration from CMS
   useEffect(() => {
     let isMounted = true;
 
