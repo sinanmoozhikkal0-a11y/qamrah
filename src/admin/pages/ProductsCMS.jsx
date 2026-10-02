@@ -147,7 +147,7 @@ export default function ProductsCMS() {
   const handleToggleStatus = async (product) => {
     const newStatus = product.status === 'active' ? 'inactive' : 'active';
     try {
-      const res = await api.products.update(product._id, { status: newStatus });
+      const res = await api.products.updateStatus(product._id, newStatus);
       if (res.success) {
         setToastMessage(`Product marked as ${newStatus}`);
         setToastType('success');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, Banknote, Sparkles, MessageCircle, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useCart } from '../context/CartContext';
@@ -12,7 +12,7 @@ export default function CheckoutModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: '',
+    phone: user?.phone || '',
     address: '',
     city: 'Mumbai',
     state: 'Maharashtra',
@@ -27,10 +27,38 @@ export default function CheckoutModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: prev.name || user.name || '',
+        email: prev.email || user.email || '',
+        phone: prev.phone || user.phone || ''
+      }));
+    }
+  }, [user]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!cartItems || cartItems.length === 0) {
+      setError('Your shopping bag is empty. Please add items to checkout.');
+      return;
+    }
+
+    if (!formData.name?.trim() || !formData.phone?.trim() || !formData.address?.trim() || !formData.city?.trim() || !formData.pincode?.trim()) {
+      setError('Please fill in all required shipping details.');
+      return;
+    }
+
+    if (!user && !formData.email?.trim()) {
+      setError('Please provide your email address to receive order updates.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
 

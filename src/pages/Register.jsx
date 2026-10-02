@@ -15,8 +15,9 @@ export default function Register() {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -30,8 +31,19 @@ export default function Register() {
       return;
     }
 
-    register(formData.name, formData.email, formData.password);
-    navigate('/');
+    setLoading(true);
+    try {
+      const res = await register(formData.name, formData.email, formData.password);
+      if (res && !res.success) {
+        setError(res.error || 'Registration failed');
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -149,8 +161,8 @@ export default function Register() {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: '6px' }}>
-            <span>CREATE MY ACCOUNT</span>
+          <button type="submit" disabled={loading} className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: '6px' }}>
+            <span>{loading ? 'CREATING ACCOUNT...' : 'CREATE MY ACCOUNT'}</span>
             <ArrowRight size={16} />
           </button>
         </form>

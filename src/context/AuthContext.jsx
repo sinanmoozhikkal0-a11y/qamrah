@@ -6,6 +6,7 @@ import { useToast } from './ToastContext';
 const AuthContext = createContext();
 
 const AUTH_STORAGE_KEY = 'qamrah_auth_user_v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -33,39 +34,77 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  const login = (email, _password, _rememberMe = true) => {
-    // Generate clean user profile from email if not preset
-    const extractedName = email.split('@')[0];
-    const formattedName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1);
-
-    const loggedInUser = {
-      name: formattedName,
-      email: email,
-      memberTier: 'Gold Connoisseur',
-      memberSince: '2026',
-      avatarInitial: formattedName.charAt(0)
+  // Verify session on mount
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('qamrah_customer_token') : null;
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const json = await res.json();
+          if (json.success && json.data?.user) {
+            setUser(json.data.user);
+          } else {
+            localStorage.removeItem('qamrah_customer_token');
+            setUser(null);
+          }
+        } catch {
+          // Keep current state on network failure
+        }
+      }
     };
+    verifyToken();
+  }, []);
 
-    setUser(loggedInUser);
-    addToast(`Welcome back to QAMRAH, ${formattedName}!`);
-    return { success: true, user: loggedInUser };
+  const login = async (email, password, _rememberMe = true) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Invalid email or password.');
+      }
+      const token = data.data.token;
+      const loggedInUser = data.data.user;
+      localStorage.setItem('qamrah_customer_token', token);
+      setUser(loggedInUser);
+      addToast(`Welcome back to QAMRAH, ${loggedInUser.name}!`);
+      return { success: true, user: loggedInUser };
+    } catch (err) {
+      throw err;
+    }
   };
 
-  const register = (name, email, _password) => {
-    const newUser = {
-      name: name,
-      email: email,
-      memberTier: 'Royal Privilege Member',
-      memberSince: '2026',
-      avatarInitial: name.charAt(0).toUpperCase()
-    };
-
-    setUser(newUser);
-    addToast(`Account created! Welcome to QAMRAH, ${name}.`);
-    return { success: true, user: newUser };
+  const register = async (name, email, password, phone = '') => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, phone })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Registration failed.');
+      }
+      const token = data.data.token;
+      const newUser = data.data.user;
+      localStorage.setItem('qamrah_customer_token', token);
+      setUser(newUser);
+      addToast(`Account created! Welcome to QAMRAH, ${name}.`);
+      return { success: true, user: newUser };
+    } catch (err) {
+      throw err;
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem('qamrah_customer_token');
+    localStorage.removeItem(AUTH_STORAGE_KEY);
     setUser(null);
     addToast('You have been signed out.');
   };

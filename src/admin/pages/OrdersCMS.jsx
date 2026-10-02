@@ -22,25 +22,25 @@ export default function OrdersCMS() {
 
   const [searchParams] = useSearchParams();
 
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const res = await api.orders.getAll({ status: statusFilter === 'all' ? '' : statusFilter });
-        if (res.success) {
-          setOrders(res.data || []);
+  const loadOrders = async () => {
+    try {
+      const res = await api.orders.getAll({ status: statusFilter === 'all' ? '' : statusFilter });
+      if (res.success) {
+        setOrders(res.data || []);
 
-          // If view param exists, open that order
-          const viewId = searchParams.get('view');
-          if (viewId && res.data) {
-            const matched = res.data.find((o) => o._id === viewId || o.orderId === viewId);
-            if (matched) setSelectedOrder(matched);
-          }
+        // If view param exists, open that order
+        const viewId = searchParams.get('view');
+        if (viewId && res.data) {
+          const matched = res.data.find((o) => o._id === viewId || o.orderId === viewId);
+          if (matched) setSelectedOrder(matched);
         }
-      } catch (err) {
-        console.error(err);
       }
-    };
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
+  useEffect(() => {
     loadOrders();
   }, [statusFilter, searchParams]);
 
@@ -58,6 +58,26 @@ export default function OrdersCMS() {
       }
     } catch (err) {
       setToastMessage(err.message || 'Failed to update status');
+      setToastType('error');
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (orderId, newPaymentStatus) => {
+    setStatusUpdating(true);
+    try {
+      const res = await api.orders.updatePaymentStatus(orderId, newPaymentStatus);
+      if (res.success) {
+        setToastMessage(`Payment status updated to ${newPaymentStatus}`);
+        setToastType('success');
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder(res.data);
+        }
+        loadOrders();
+      }
+    } catch (err) {
+      setToastMessage(err.message || 'Failed to update payment status');
       setToastType('error');
     } finally {
       setStatusUpdating(false);
@@ -146,13 +166,15 @@ export default function OrdersCMS() {
                 <th>Phone</th>
                 <th>Amount</th>
                 <th>Date</th>
-                <th>Status</th>
+                <th>Order Status</th>
+                <th>Payment</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map((order) => {
                 const statusClass = (order.status || 'pending').toLowerCase();
+                const paymentClass = (order.paymentStatus || 'pending').toLowerCase();
                 const formattedDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
                   day: 'numeric',
                   month: 'short',
@@ -173,6 +195,9 @@ export default function OrdersCMS() {
                     <td style={{ color: 'var(--admin-text-muted)', fontSize: '0.8rem' }}>{formattedDate}</td>
                     <td>
                       <span className={`status-badge ${statusClass}`}>{order.status}</span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${paymentClass}`}>{order.paymentStatus || 'pending'}</span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <button
@@ -235,23 +260,44 @@ export default function OrdersCMS() {
                 gap: '12px'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--admin-gold-base)', fontWeight: '700', textTransform: 'uppercase' }}>
-                  Update Order Status:
-                </span>
-                <select
-                  value={selectedOrder.status}
-                  disabled={statusUpdating}
-                  onChange={(e) => handleUpdateStatus(selectedOrder._id, e.target.value)}
-                  className="admin-select"
-                  style={{ width: '150px', padding: '6px 10px', fontSize: '0.8rem' }}
-                >
-                  {statuses.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--admin-gold-base)', fontWeight: '700', textTransform: 'uppercase' }}>
+                    Order Status:
+                  </span>
+                  <select
+                    value={selectedOrder.status}
+                    disabled={statusUpdating}
+                    onChange={(e) => handleUpdateStatus(selectedOrder._id, e.target.value)}
+                    className="admin-select"
+                    style={{ width: '135px', padding: '6px 10px', fontSize: '0.8rem' }}
+                  >
+                    {statuses.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--admin-gold-base)', fontWeight: '700', textTransform: 'uppercase' }}>
+                    Payment Status:
+                  </span>
+                  <select
+                    value={selectedOrder.paymentStatus || 'pending'}
+                    disabled={statusUpdating}
+                    onChange={(e) => handleUpdatePaymentStatus(selectedOrder._id, e.target.value)}
+                    className="admin-select"
+                    style={{ width: '125px', padding: '6px 10px', fontSize: '0.8rem' }}
+                  >
+                    {['pending', 'paid', 'failed', 'refunded'].map((ps) => (
+                      <option key={ps} value={ps}>
+                        {ps.charAt(0).toUpperCase() + ps.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '10px' }}>

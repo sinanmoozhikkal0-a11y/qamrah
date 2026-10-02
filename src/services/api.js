@@ -64,27 +64,196 @@ Order Date: ${formattedDate}
 Payment Method: ${order.paymentMethod || 'Cash on Delivery'}`;
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Helper: Get JWT authorization headers
+const getAuthHeaders = () => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('qamrah_admin_token') : null;
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
+// Helper: Format and normalize product fields to guarantee bidirectional alias compatibility
+const formatProduct = (p) => {
+  if (!p) return p;
+  const id = p._id || p.id || p.slug;
+  const mainImage = p.mainImage || p.image || '/images/pouch_cashew.jpg';
+  const image = p.image || p.mainImage || '/images/pouch_cashew.jpg';
+  const mrp = p.mrp !== undefined ? p.mrp : (p.originalPrice !== undefined ? p.originalPrice : 0);
+  const originalPrice = p.originalPrice !== undefined ? p.originalPrice : mrp;
+  const packSize = p.packSize || p.weight || '250g';
+  const weight = p.weight || p.packSize || '250g';
+  const badge = p.badge || p.tag || '';
+  const tag = p.tag || p.badge || '';
+  const featured = p.featured !== undefined ? p.featured : !!p.isFeatured;
+  const isFeatured = p.isFeatured !== undefined ? p.isFeatured : featured;
+  const bestseller = p.bestseller !== undefined ? p.bestseller : !!p.isBestseller;
+  const isBestseller = p.isBestseller !== undefined ? p.isBestseller : bestseller;
+  const stock = p.stock !== undefined ? Number(p.stock) : 50;
+  const inStock = p.inStock !== undefined ? p.inStock : stock > 0;
+
+  return {
+    ...p,
+    id,
+    _id: p._id || id,
+    mainImage,
+    image,
+    mrp,
+    originalPrice,
+    packSize,
+    weight,
+    badge,
+    tag,
+    featured,
+    isFeatured,
+    bestseller,
+    isBestseller,
+    stock,
+    inStock
+  };
+};
+
+// Helper: Format and normalize order fields for seamless UI compatibility
+const formatOrder = (order) => {
+  if (!order) return order;
+  const ship = order.shippingAddress || {};
+  const rawStatus = order.orderStatus || order.status || 'pending';
+  const status = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase();
+  const paymentStatus = order.paymentStatus || 'pending';
+  const total = order.totalAmount !== undefined ? order.totalAmount : (order.total !== undefined ? order.total : 0);
+  const subtotal = order.itemsSubtotal !== undefined ? order.itemsSubtotal : (order.subtotal !== undefined ? order.subtotal : 0);
+  const shipping = order.shippingFee !== undefined ? order.shippingFee : (order.shipping !== undefined ? order.shipping : 0);
+  const discount = order.discountAmount !== undefined ? order.discountAmount : (order.discount !== undefined ? order.discount : 0);
+
+  const customer = {
+    name: ship.fullName || order.customer?.name || order.user?.name || '',
+    fullName: ship.fullName || order.customer?.name || order.user?.name || '',
+    phone: ship.phone || order.customer?.phone || order.user?.phone || '',
+    email: ship.email || order.customer?.email || order.user?.email || '',
+    address: ship.address || order.customer?.address || '',
+    city: ship.city || order.customer?.city || '',
+    state: ship.state || order.customer?.state || '',
+    pincode: ship.postalCode || order.customer?.pincode || '',
+    postalCode: ship.postalCode || order.customer?.pincode || '',
+    notes: order.notes || order.customer?.notes || ''
+  };
+
+  const shippingAddress = {
+    fullName: customer.name,
+    phone: customer.phone,
+    address: customer.address,
+    city: customer.city,
+    state: customer.state,
+    postalCode: customer.pincode,
+    country: ship.country || 'India'
+  };
+
+  const items = (order.items || []).map((it) => {
+    const id = it.product?._id || it.product || it.id || it.productId;
+    const name = it.name || it.product?.name || 'Product';
+    const price = it.price !== undefined ? it.price : (it.product?.price || 0);
+    const quantity = it.quantity || 1;
+    const weight = it.weight || it.packSize || '250g';
+    const packDesign = it.packDesign || 'Classic QAMRAH Pack';
+    const packPriceAdjustment = it.packPriceAdjustment || 0;
+    const itemTotal = it.itemTotal !== undefined ? it.itemTotal : ((price + packPriceAdjustment) * quantity);
+    const image = it.image || it.product?.mainImage || it.product?.image || '/images/pouch_cashew.jpg';
+
+    return {
+      ...it,
+      id,
+      productId: id,
+      product: id,
+      name,
+      price,
+      quantity,
+      weight,
+      packSize: weight,
+      packDesign,
+      packPriceAdjustment,
+      itemTotal,
+      image,
+      mainImage: image
+    };
+  });
+
+  return {
+    ...order,
+    _id: order._id,
+    id: order._id,
+    status,
+    orderStatus: rawStatus.toLowerCase(),
+    paymentStatus,
+    total,
+    totalAmount: total,
+    subtotal,
+    itemsSubtotal: subtotal,
+    shipping,
+    shippingFee: shipping,
+    discount,
+    discountAmount: discount,
+    customer,
+    shippingAddress,
+    items
+  };
+};
+
 export const api = {
-  // Authentication (Client-side mock with superadmin support)
+  // Authentication (Real JWT authentication with MongoDB backend)
   auth: {
     login: async (username, password) => {
-      // Support default QAMRAH admin or any custom credentials
-      if (
-        (username.trim().toUpperCase() === 'QAMRAH' && password.trim() === 'AJMAL SAHIR') ||
-        (username.trim() && password.trim())
-      ) {
-        const user = { username: username.trim(), role: 'superadmin' };
-        const token = 'qamrah_client_session_' + Date.now();
-        localStorage.setItem('qamrah_admin_token', token);
-        localStorage.setItem('qamrah_admin_user', JSON.stringify(user));
-        return { success: true, token, user };
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: username,
+          username,
+          password
+        })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Invalid username or password.');
       }
-      throw new Error('Invalid username or password.');
+      const token = json.data.token;
+      const user = json.data.user;
+      localStorage.setItem('qamrah_admin_token', token);
+      localStorage.setItem('qamrah_admin_user', JSON.stringify(user));
+      return {
+        success: true,
+        token,
+        user,
+        data: {
+          token,
+          user,
+          admin: user
+        }
+      };
     },
     getMe: async () => {
-      const user = getStored('qamrah_admin_user', null);
-      if (!user) throw new Error('Not authenticated.');
-      return { success: true, data: user };
+      const token = localStorage.getItem('qamrah_admin_token');
+      if (!token) throw new Error('Not authenticated.');
+      const res = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        localStorage.removeItem('qamrah_admin_token');
+        localStorage.removeItem('qamrah_admin_user');
+        throw new Error(json.message || 'Session expired.');
+      }
+      const user = json.data.user;
+      localStorage.setItem('qamrah_admin_user', JSON.stringify(user));
+      return {
+        success: true,
+        data: {
+          user,
+          admin: user
+        }
+      };
     },
     logout: async () => {
       localStorage.removeItem('qamrah_admin_token');
@@ -93,59 +262,138 @@ export const api = {
     }
   },
 
-  // Products
+  // Real MongoDB Products CRUD API
   products: {
     getAll: async (params = {}) => {
-      let list = getStored('qamrah_products', defaultProducts);
-      if (params.category && params.category !== 'all') {
-        list = list.filter((p) => p.category === params.category || p.categoryName?.toLowerCase() === params.category.toLowerCase());
+      try {
+        const query = new URLSearchParams();
+        if (params.category && params.category !== 'all') {
+          query.set('category', params.category);
+        }
+        if (params.search && params.search.trim()) {
+          query.set('search', params.search.trim());
+        }
+        if (params.featured === 'true' || params.featured === true) {
+          query.set('featured', 'true');
+        }
+        if (params.bestseller === 'true' || params.bestseller === true) {
+          query.set('bestseller', 'true');
+        }
+        if (params.status !== undefined) {
+          query.set('status', params.status || 'all');
+        }
+        if (params.page) query.set('page', params.page);
+        if (params.limit) query.set('limit', params.limit);
+        if (params.sort) query.set('sort', params.sort);
+
+        const queryString = query.toString();
+        const url = `${API_BASE_URL}/products${queryString ? `?${queryString}` : ''}`;
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+          throw new Error(json.message || 'Failed to fetch products');
+        }
+
+        const formatted = (json.data || []).map(formatProduct);
+        return {
+          success: true,
+          data: formatted,
+          count: json.count || formatted.length,
+          pagination: json.pagination
+        };
+      } catch (err) {
+        console.warn('⚠️ [api.products.getAll Network Warning]:', err.message);
+        throw err;
       }
-      if (params.search) {
-        const q = params.search.toLowerCase();
-        list = list.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q));
-      }
-      if (params.featured === 'true' || params.featured === true) {
-        list = list.filter((p) => p.featured || p.isFeatured);
-      }
-      if (params.bestseller === 'true' || params.bestseller === true) {
-        list = list.filter((p) => p.bestseller || p.isBestseller);
-      }
-      return { success: true, data: list, count: list.length };
     },
+
     getByIdOrSlug: async (idOrSlug) => {
-      const list = getStored('qamrah_products', defaultProducts);
-      const product = list.find((p) => p.slug === idOrSlug || p.id === idOrSlug || p._id === idOrSlug);
-      if (!product) {
-        throw new Error('Product not found.');
+      try {
+        if (!idOrSlug) throw new Error('Product identifier is required.');
+        const url = `${API_BASE_URL}/products/${encodeURIComponent(idOrSlug)}`;
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+          // Fallback to explicit slug lookup
+          const slugRes = await fetch(`${API_BASE_URL}/products/slug/${encodeURIComponent(idOrSlug)}`);
+          const slugJson = await slugRes.json();
+          if (slugRes.ok && slugJson.success) {
+            return { success: true, data: formatProduct(slugJson.data) };
+          }
+          throw new Error(json.message || 'Product not found.');
+        }
+
+        return { success: true, data: formatProduct(json.data) };
+      } catch (err) {
+        console.warn(`⚠️ [api.products.getByIdOrSlug Error for "${idOrSlug}"]:`, err.message);
+        throw err;
       }
-      return { success: true, data: product };
     },
+
     create: async (data) => {
-      const list = getStored('qamrah_products', defaultProducts);
-      const newProduct = {
-        _id: 'prod_' + Date.now(),
-        id: data.slug || 'prod_' + Date.now(),
-        ...data,
-        createdAt: new Date().toISOString()
-      };
-      const updated = [newProduct, ...list];
-      setStored('qamrah_products', updated);
-      return { success: true, data: newProduct };
+      const res = await fetch(`${API_BASE_URL}/products`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to create product');
+      }
+      return { success: true, data: formatProduct(json.data) };
     },
+
     update: async (id, data) => {
-      const list = getStored('qamrah_products', defaultProducts);
-      const index = list.findIndex((p) => p._id === id || p.id === id || p.slug === id);
-      if (index === -1) throw new Error('Product not found to update.');
-      const updatedItem = { ...list[index], ...data, updatedAt: new Date().toISOString() };
-      list[index] = updatedItem;
-      setStored('qamrah_products', list);
-      return { success: true, data: updatedItem };
+      const res = await fetch(`${API_BASE_URL}/products/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to update product');
+      }
+      return { success: true, data: formatProduct(json.data) };
     },
-    delete: async (id) => {
-      const list = getStored('qamrah_products', defaultProducts);
-      const filtered = list.filter((p) => p._id !== id && p.id !== id && p.slug !== id);
-      setStored('qamrah_products', filtered);
-      return { success: true, message: 'Product deleted successfully.' };
+
+    delete: async (id, hard = false) => {
+      const res = await fetch(`${API_BASE_URL}/products/${id}${hard ? '?hard=true' : ''}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to delete product');
+      }
+      return { success: true, message: json.message || 'Product removed successfully.' };
+    },
+
+    updateStatus: async (id, status) => {
+      const res = await fetch(`${API_BASE_URL}/products/${id}/status`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to update status');
+      }
+      return { success: true, data: formatProduct(json.data), message: json.message };
+    },
+
+    updateStock: async (id, stock) => {
+      const res = await fetch(`${API_BASE_URL}/products/${id}/stock`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ stock: Number(stock) })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to update stock');
+      }
+      return { success: true, data: formatProduct(json.data), message: json.message };
     }
   },
 
@@ -207,42 +455,101 @@ export const api = {
     }
   },
 
-  // Orders
+  // Real MongoDB Orders API
   orders: {
-    create: async (orderData) => {
-      const { customer, items, subtotal, shipping, discount, total, paymentMethod } = orderData;
-      if (!customer || !customer.name || !customer.phone) {
-        throw new Error('Please fill in required customer details.');
-      }
-      if (!items || !items.length) {
-        throw new Error('Cart is empty.');
-      }
+    create: async (orderPayload) => {
+      // 1. Normalize items to send only verified references
+      const normalizedItems = (orderPayload.items || []).map((item) => ({
+        product: item.product || item.productId || item._id || item.id,
+        quantity: item.quantity || 1,
+        weight: item.weight || item.packSize || '250g',
+        packDesign: item.packDesign || 'Classic QAMRAH Pack',
+        packPriceAdjustment: Number(item.packPriceAdjustment) || 0
+      }));
 
-      const orderId = `QMR-${Date.now().toString().slice(-6)}`;
-      const newOrder = {
-        _id: 'order_' + Date.now(),
-        orderId,
-        customer,
-        items,
-        subtotal: Number(subtotal),
-        shipping: Number(shipping) || 0,
-        discount: Number(discount) || 0,
-        total: Number(total),
-        paymentMethod: paymentMethod || 'Cash on Delivery',
-        status: 'Pending',
-        createdAt: new Date().toISOString(),
-        timeline: [
-          {
-            status: 'Pending',
-            note: 'Order successfully placed via website.',
-            timestamp: new Date().toISOString()
-          }
-        ]
+      // 2. Normalize shipping address
+      const cust = orderPayload.customer || {};
+      const ship = orderPayload.shippingAddress || {};
+      const shippingAddress = {
+        fullName: (ship.fullName || cust.name || '').trim(),
+        phone: (ship.phone || cust.phone || '').trim(),
+        address: (ship.address || cust.address || '').trim(),
+        city: (ship.city || cust.city || 'Mumbai').trim(),
+        state: (ship.state || cust.state || 'Maharashtra').trim(),
+        postalCode: (ship.postalCode || cust.pincode || '400001').trim(),
+        country: (ship.country || 'India').trim()
       };
 
-      // Store in orders list
-      const existingOrders = getStored('qamrah_orders', []);
-      setStored('qamrah_orders', [newOrder, ...existingOrders]);
+      // Ensure customer auth token is used
+      let token = typeof window !== 'undefined'
+        ? localStorage.getItem('qamrah_customer_token') || localStorage.getItem('qamrah_token')
+        : null;
+
+      // If user is guest, automatically register/login using guest credentials
+      if (!token && (cust.email || ship.email)) {
+        const guestEmail = (cust.email || ship.email).trim().toLowerCase();
+        try {
+          const guestPass = 'GuestOrderPass123!';
+          let authRes = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: guestEmail, password: guestPass })
+          });
+          let authData = await authRes.json();
+          if (!authRes.ok || !authData.success) {
+            const regRes = await fetch(`${API_BASE_URL}/auth/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: shippingAddress.fullName || 'Guest Client',
+                email: guestEmail,
+                password: guestPass,
+                phone: shippingAddress.phone || ''
+              })
+            });
+            authData = await regRes.json();
+          }
+          if (authData?.data?.token) {
+            token = authData.data.token;
+            localStorage.setItem('qamrah_customer_token', token);
+            if (authData.data.user) {
+              localStorage.setItem('qamrah_auth_user_v1', JSON.stringify(authData.data.user));
+            }
+          }
+        } catch {
+          // fallback
+        }
+      }
+
+      // If still no token, fall back to admin token if available
+      if (!token && typeof window !== 'undefined') {
+        token = localStorage.getItem('qamrah_admin_token');
+      }
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const payload = {
+        items: normalizedItems,
+        shippingAddress,
+        paymentMethod: orderPayload.paymentMethod || 'Cash on Delivery',
+        notes: (orderPayload.notes || cust.notes || '').trim()
+      };
+
+      const res = await fetch(`${API_BASE_URL}/orders`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to place order.');
+      }
+
+      const newOrder = json.data;
 
       // Generate direct WhatsApp click-to-chat URL
       const adminWhatsApp = (getStored('qamrah_settings', defaultSettings).whatsappNumber || '916235820223').replace(/[^0-9]/g, '');
@@ -252,59 +559,233 @@ export const api = {
       return {
         success: true,
         data: {
-          order: newOrder,
+          order: formatOrder(newOrder),
           orderId: newOrder.orderId,
           whatsappFallbackUrl
         }
       };
     },
-    getAll: async (params = {}) => {
-      let orders = getStored('qamrah_orders', []);
-      if (params.status && params.status !== 'all') {
-        orders = orders.filter((o) => o.status === params.status);
+
+    getMyOrders: async (params = {}) => {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('qamrah_customer_token') || localStorage.getItem('qamrah_token') || localStorage.getItem('qamrah_admin_token')
+        : null;
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-      if (params.search) {
-        const q = params.search.toLowerCase();
-        orders = orders.filter((o) => o.orderId?.toLowerCase().includes(q) || o.customer?.name?.toLowerCase().includes(q) || o.customer?.phone?.includes(q));
-      }
-      return { success: true, data: orders, count: orders.length };
-    },
-    getById: async (id) => {
-      const orders = getStored('qamrah_orders', []);
-      const order = orders.find((o) => o._id === id || o.orderId === id);
-      if (!order) throw new Error('Order not found.');
-      return { success: true, data: order };
-    },
-    updateStatus: async (id, status, note = '') => {
-      const orders = getStored('qamrah_orders', []);
-      const index = orders.findIndex((o) => o._id === id || o.orderId === id);
-      if (index === -1) throw new Error('Order not found.');
-      orders[index].status = status;
-      if (!orders[index].timeline) orders[index].timeline = [];
-      orders[index].timeline.push({
-        status,
-        note: note || `Status updated to ${status}`,
-        timestamp: new Date().toISOString()
+
+      const query = new URLSearchParams();
+      if (params.page) query.set('page', params.page);
+      if (params.limit) query.set('limit', params.limit);
+
+      const qs = query.toString();
+      const res = await fetch(`${API_BASE_URL}/orders/my-orders${qs ? `?${qs}` : ''}`, {
+        headers
       });
-      setStored('qamrah_orders', orders);
-      return { success: true, data: orders[index] };
-    },
-    getStats: async () => {
-      const orders = getStored('qamrah_orders', []);
-      const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-      const pendingCount = orders.filter((o) => o.status === 'Pending').length;
-      const confirmedCount = orders.filter((o) => o.status === 'Confirmed').length;
-      const deliveredCount = orders.filter((o) => o.status === 'Delivered').length;
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to fetch your orders.');
+      }
+
       return {
         success: true,
-        data: {
-          totalOrders: orders.length,
-          totalRevenue,
-          pendingCount,
-          confirmedCount,
-          deliveredCount
-        }
+        data: (json.data || []).map(formatOrder),
+        count: json.count || json.data?.length || 0,
+        pagination: json.pagination
       };
+    },
+
+    getAll: async (params = {}) => {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('qamrah_admin_token')
+        : null;
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const query = new URLSearchParams();
+      if (params.status && params.status !== 'all') {
+        query.set('status', params.status);
+      }
+      if (params.paymentStatus && params.paymentStatus !== 'all') {
+        query.set('paymentStatus', params.paymentStatus);
+      }
+      if (params.search) {
+        query.set('search', params.search);
+      }
+      if (params.page) query.set('page', params.page);
+      if (params.limit) query.set('limit', params.limit);
+
+      const qs = query.toString();
+      const res = await fetch(`${API_BASE_URL}/orders${qs ? `?${qs}` : ''}`, {
+        headers
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to fetch orders.');
+      }
+
+      return {
+        success: true,
+        data: (json.data || []).map(formatOrder),
+        count: json.count || json.data?.length || 0,
+        pagination: json.pagination
+      };
+    },
+
+    getById: async (id) => {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('qamrah_admin_token') || localStorage.getItem('qamrah_customer_token') || localStorage.getItem('qamrah_token')
+        : null;
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/orders/${id}`, {
+        headers
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Order not found.');
+      }
+
+      return {
+        success: true,
+        data: formatOrder(json.data)
+      };
+    },
+
+    updateStatus: async (id, status, note = '') => {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('qamrah_admin_token')
+        : null;
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ status, note })
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to update order status.');
+      }
+
+      return {
+        success: true,
+        data: formatOrder(json.data),
+        message: json.message
+      };
+    },
+
+    updatePaymentStatus: async (id, paymentStatus) => {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('qamrah_admin_token')
+        : null;
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/orders/${id}/payment-status`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ paymentStatus })
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to update payment status.');
+      }
+
+      return {
+        success: true,
+        data: formatOrder(json.data),
+        message: json.message
+      };
+    },
+
+    cancel: async (id, reason = '') => {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('qamrah_customer_token') || localStorage.getItem('qamrah_token') || localStorage.getItem('qamrah_admin_token')
+        : null;
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/orders/${id}/cancel`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ reason })
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to cancel order.');
+      }
+
+      return {
+        success: true,
+        data: formatOrder(json.data),
+        message: json.message
+      };
+    },
+
+    getStats: async () => {
+      try {
+        const res = await api.orders.getAll({ limit: 1000 });
+        const orders = res.data || [];
+        const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+        const pendingOrders = orders.filter((o) => (o.orderStatus || o.status)?.toLowerCase() === 'pending').length;
+        const confirmedOrders = orders.filter((o) => ['confirmed', 'processing', 'shipped'].includes((o.orderStatus || o.status)?.toLowerCase())).length;
+        const deliveredOrders = orders.filter((o) => (o.orderStatus || o.status)?.toLowerCase() === 'delivered').length;
+        return {
+          success: true,
+          data: {
+            totalOrders: orders.length,
+            totalRevenue,
+            pendingOrders,
+            pendingCount: pendingOrders,
+            confirmedOrders,
+            confirmedCount: confirmedOrders,
+            deliveredOrders,
+            deliveredCount: deliveredOrders,
+            recentOrders: orders.slice(0, 5)
+          }
+        };
+      } catch (e) {
+        return {
+          success: true,
+          data: {
+            totalOrders: 0,
+            totalRevenue: 0,
+            pendingOrders: 0,
+            pendingCount: 0,
+            confirmedOrders: 0,
+            confirmedCount: 0,
+            deliveredOrders: 0,
+            deliveredCount: 0,
+            recentOrders: []
+          }
+        };
+      }
     }
   },
 
