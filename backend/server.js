@@ -37,6 +37,12 @@ const startServer = async () => {
 
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
+  return server;
 };
 
-startServer();
+// Start standalone server only when not running in Vercel serverless environment
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;

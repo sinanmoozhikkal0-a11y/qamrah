@@ -5,6 +5,8 @@ import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+import mongoose from 'mongoose';
+import { connectDB } from './config/db.js';
 
 const app = express();
 
@@ -38,6 +40,18 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serverless DB connection middleware (ensures Mongoose is connected for Vercel functions)
+app.use(async (_req, _res, next) => {
+  if (process.env.VERCEL && mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (error) {
+      console.error('Database connection error in serverless request lifecycle:', error.message);
+    }
+  }
+  next();
+});
+
 // Base API Routes
 app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
@@ -46,6 +60,14 @@ app.use('/api/orders', orderRoutes);
 
 // Root route convenience redirect
 app.get('/', (_req, res) => {
+  res.json({
+    service: 'QAMRAH Luxury E-Commerce Backend API',
+    documentation: '/api/health',
+    status: 'online'
+  });
+});
+
+app.get('/api', (_req, res) => {
   res.json({
     service: 'QAMRAH Luxury E-Commerce Backend API',
     documentation: '/api/health',

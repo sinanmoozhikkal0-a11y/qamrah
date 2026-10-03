@@ -1,11 +1,50 @@
 import mongoose from 'mongoose';
 import dns from 'dns';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+/**
+ * Global cache for Mongoose connection in serverless environments (Vercel).
+ * Prevents multiple connections during serverless function invocations.
+ */
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+let lastConnectAttempt = 0;
+const RETRY_COOLDOWN_MS = 15000;
 
 /**
  * Connects to MongoDB database using Mongoose.
  * Reads connection string from MONGO_URI environment variable.
+ * Compatible with both persistent servers and Vercel serverless functions.
  */
 export const connectDB = async () => {
+  // If connection is already established, return it immediately
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  // If a connection attempt failed recently, avoid stalling request pipelines repeatedly
+  const now = Date.now();
+  if (!cached.promise && now - lastConnectAttempt < RETRY_COOLDOWN_MS) {
+    return null;
+  }
+  lastConnectAttempt = now;
+
   let mongoUri = process.env.MONGO_URI;
 
   if (!mongoUri) {
@@ -30,18 +69,31 @@ export const connectDB = async () => {
     }
   }
 
-  try {
-    const conn = await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 5000
-    });
+  if (!cached.promise) {
+    const opts = {
+      serverSelectionTimeoutMS: 5000,
+      maxPoolSize: 10
+    };
 
-    console.log(`🌿 [MongoDB Connected]: ${conn.connection.host}/${conn.connection.name}`);
-    return conn;
-  } catch (error) {
-    console.error(`❌ [MongoDB Connection Error]: ${error.message}`);
-    if (error.message.includes('IP that isn\'t whitelisted') || error.message.includes('Could not connect to any servers')) {
-      console.warn('💡 [Atlas IP Whitelist Notice]: In MongoDB Atlas, go to "Network Access" and ensure your current IP or 0.0.0.0/0 (Allow Access from Anywhere) is enabled.');
-    }
+    cached.promise = mongoose.connect(mongoUri, opts).then((m) => {
+      console.log(`🌿 [MongoDB Connected]: ${m.connection.host}/${m.connection.name}`);
+      return m.connection;
+    }).catch((error) => {
+      cached.promise = null;
+      console.error(`❌ [MongoDB Connection Error]: ${error.message}`);
+      if (error.message.includes('IP that isn\'t whitelisted') || error.message.includes('Could not connect to any servers')) {
+        console.warn('💡 [Atlas IP Whitelist Notice]: In MongoDB Atlas, go to "Network Access" and ensure your current IP or 0.0.0.0/0 (Allow Access from Anywhere) is enabled.');
+      }
+      return null;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch {
+    cached.conn = null;
+    cached.promise = null;
     return null;
   }
 };
@@ -62,6 +114,8 @@ export const getDatabaseStatus = () => {
 export const closeDB = async () => {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.connection.close();
+    cached.conn = null;
+    cached.promise = null;
     console.log('🌿 [MongoDB Closed]');
   }
 };
