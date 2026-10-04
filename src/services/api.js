@@ -64,7 +64,10 @@ Order Date: ${formattedDate}
 Payment Method: ${order.paymentMethod || 'Cash on Delivery'}`;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'https://qamrah-backend-livid.vercel.app/api';
+const API_BASE_URL = rawApiUrl.replace(/\/+$/, '').endsWith('/api')
+  ? rawApiUrl.replace(/\/+$/, '')
+  : `${rawApiUrl.replace(/\/+$/, '')}/api`;
 
 // Helper: Get JWT authorization headers
 const getAuthHeaders = () => {

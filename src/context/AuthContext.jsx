@@ -6,7 +6,10 @@ import { useToast } from './ToastContext';
 const AuthContext = createContext();
 
 const AUTH_STORAGE_KEY = 'qamrah_auth_user_v1';
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'https://qamrah-backend-livid.vercel.app/api';
+const API_BASE_URL = rawApiUrl.replace(/\/+$/, '').endsWith('/api')
+  ? rawApiUrl.replace(/\/+$/, '')
+  : `${rawApiUrl.replace(/\/+$/, '')}/api`;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
