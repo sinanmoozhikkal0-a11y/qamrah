@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { deleteImageFromCloudinary, extractPublicIdFromUrl } from '../config/cloudinary.js';
 
 // Helper: Slugify text if slug is not provided
 const slugify = (text) =>
@@ -292,9 +293,22 @@ export const updateProduct = async (req, res) => {
       payload.slug = cleanSlug;
     }
 
+    const oldMainImage = product.mainImage;
+    const isImageUpdated = payload.mainImage && payload.mainImage !== oldMainImage;
+
     // Apply updates
     Object.assign(product, payload);
     await product.save();
+
+    // If product image was replaced with a new one and old was Cloudinary, clean up old asset
+    if (isImageUpdated && oldMainImage && (oldMainImage.includes('cloudinary.com') || oldMainImage.includes('res.cloudinary'))) {
+      const oldPublicId = extractPublicIdFromUrl(oldMainImage);
+      if (oldPublicId) {
+        deleteImageFromCloudinary(oldPublicId).catch((delErr) => {
+          console.warn('[Cloudinary] Notice cleaning up replaced product image:', delErr.message);
+        });
+      }
+    }
 
     return sendSuccess(res, 'Product updated successfully.', product);
   } catch (error) {
@@ -326,6 +340,14 @@ export const deleteProduct = async (req, res) => {
 
     // Check if hard delete was specifically requested via query ?hard=true
     if (req.query.hard === 'true') {
+      if (product.mainImage && (product.mainImage.includes('cloudinary.com') || product.mainImage.includes('res.cloudinary'))) {
+        const publicId = extractPublicIdFromUrl(product.mainImage);
+        if (publicId) {
+          deleteImageFromCloudinary(publicId).catch((delErr) => {
+            console.warn('[Cloudinary] Notice cleaning up deleted product image:', delErr.message);
+          });
+        }
+      }
       await Product.findByIdAndDelete(id);
       return sendSuccess(res, 'Product permanently removed from database.');
     }

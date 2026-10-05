@@ -933,33 +933,46 @@ export const api = {
     }
   },
 
-  // Media Library & Image Uploads (Client-Side FileReader / Object URL storage)
+  // Media Library & Image Uploads (Cloudinary CDN backed with local cache fallback)
   media: {
     getAll: async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('qamrah_admin_token') : null;
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch(`${API_BASE_URL}/uploads`, { headers });
+        const json = await res.json();
+        if (res.ok && json.success && Array.isArray(json.data)) {
+          return { success: true, data: json.data, count: json.data.length };
+        }
+      } catch {
+        // Fallback to local storage on network issue
+      }
       const media = getStored('qamrah_media', []);
       return { success: true, data: media, count: media.length };
     },
-    upload: async (file) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result;
-          const newMedia = {
-            _id: 'media_' + Date.now(),
-            url: dataUrl,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            createdAt: new Date().toISOString()
-          };
-          const existing = getStored('qamrah_media', []);
-          setStored('qamrah_media', [newMedia, ...existing]);
-          resolve({ success: true, data: newMedia });
-        };
-        reader.readAsDataURL(file);
-      });
+    upload: async (file, options) => {
+      return api.uploads.uploadImage(file, options);
     },
     delete: async (id) => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('qamrah_admin_token') : null;
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch(`${API_BASE_URL}/uploads/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers
+        });
+        const json = await res.json();
+        if (res.ok && json.success) {
+          const media = getStored('qamrah_media', []);
+          const filtered = media.filter((m) => m._id !== id && m.public_id !== id && m.url !== id);
+          setStored('qamrah_media', filtered);
+          return { success: true, message: json.message || 'Media item deleted.' };
+        }
+      } catch {
+        // Fallback to local storage
+      }
       const media = getStored('qamrah_media', []);
       const filtered = media.filter((m) => m._id !== id);
       setStored('qamrah_media', filtered);
@@ -968,25 +981,50 @@ export const api = {
   },
 
   uploads: {
-    uploadImage: async (file) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result;
-          resolve({
-            success: true,
-            data: {
-              url: dataUrl,
-              secure_url: dataUrl,
-              public_id: 'local_' + Date.now()
-            }
-          });
-        };
-        reader.readAsDataURL(file);
+    uploadImage: async (file, options = {}) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      if (options.folder) formData.append('folder', options.folder);
+      if (options.section) formData.append('section', options.section);
+
+      const token = typeof window !== 'undefined' ? localStorage.getItem('qamrah_admin_token') : null;
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/uploads/image`, {
+        method: 'POST',
+        headers,
+        body: formData
       });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Failed to upload image to Cloudinary');
+      }
+
+      return {
+        success: true,
+        data: json.data,
+        message: json.message
+      };
     },
-    deleteImage: async () => {
-      return { success: true, message: 'Image reference removed.' };
+    deleteImage: async (publicIdOrUrl) => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('qamrah_admin_token') : null;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/uploads`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ publicId: publicIdOrUrl, url: publicIdOrUrl })
+      });
+
+      const json = await res.json();
+      return json;
     }
   },
 
