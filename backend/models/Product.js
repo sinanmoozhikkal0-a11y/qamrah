@@ -222,6 +222,14 @@ productSchema.pre('save', function (next) {
     this.inStock = Number(this.stock) > 0;
   }
 
+  // Guard against storing massive base64 image strings in database
+  if (this.mainImage && typeof this.mainImage === 'string' && this.mainImage.startsWith('data:image/') && this.mainImage.length > 2048) {
+    return next(new Error('Base64 image data cannot be stored directly in database. Please provide a valid image URL or upload via Cloudinary.'));
+  }
+  if (this.image && typeof this.image === 'string' && this.image.startsWith('data:image/') && this.image.length > 2048) {
+    return next(new Error('Base64 image data cannot be stored directly in database. Please provide a valid image URL or upload via Cloudinary.'));
+  }
+
   next();
 });
 

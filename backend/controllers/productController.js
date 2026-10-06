@@ -1,7 +1,13 @@
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
+import Media from '../models/Media.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
-import { deleteImageFromCloudinary, extractPublicIdFromUrl } from '../config/cloudinary.js';
+import {
+  deleteImageFromCloudinary,
+  extractPublicIdFromUrl,
+  uploadImageToCloudinary,
+  isCloudinaryConfigured
+} from '../config/cloudinary.js';
 
 // Helper: Slugify text if slug is not provided
 const slugify = (text) =>
@@ -49,6 +55,90 @@ const normalizeProductPayload = (payload) => {
   }
 
   return data;
+};
+
+// Optimized projection for public product catalog list endpoints
+export const PUBLIC_PRODUCT_PROJECTION = [
+  '_id',
+  'name',
+  'slug',
+  'sku',
+  'category',
+  'categoryName',
+  'price',
+  'mrp',
+  'originalPrice',
+  'discount',
+  'stock',
+  'inStock',
+  'packSize',
+  'weight',
+  'availableWeights',
+  'rating',
+  'reviewCount',
+  'badge',
+  'tag',
+  'origin',
+  'shortDescription',
+  'description',
+  'highlights',
+  'ingredients',
+  'mainImage',
+  'image',
+  'backImage',
+  'status',
+  'featured',
+  'isFeatured',
+  'bestseller',
+  'isBestseller',
+  'createdAt',
+  'updatedAt'
+].join(' ');
+
+// Helper: Process and guard image fields against massive base64 payloads
+const processProductImageField = async (imageVal, fieldName = 'mainImage') => {
+  if (!imageVal || typeof imageVal !== 'string') return imageVal;
+
+  const trimmed = imageVal.trim();
+  if (trimmed.startsWith('data:image/')) {
+    // If Cloudinary is configured, attempt auto-upload to Cloudinary CDN
+    if (isCloudinaryConfigured()) {
+      try {
+        const uploadResult = await uploadImageToCloudinary(trimmed, {
+          folder: 'qamrah/products'
+        });
+        if (uploadResult && uploadResult.secure_url) {
+          // Log asset to Media collection for CMS consistency
+          try {
+            await Media.create({
+              url: uploadResult.secure_url,
+              secure_url: uploadResult.secure_url,
+              public_id: uploadResult.public_id,
+              publicId: uploadResult.public_id,
+              filename: `${fieldName}_${Date.now()}.${uploadResult.format || 'png'}`,
+              originalFilename: `${fieldName}_${Date.now()}.${uploadResult.format || 'png'}`,
+              folder: 'qamrah/products',
+              section: 'product',
+              format: uploadResult.format || 'png',
+              size: uploadResult.bytes || 0,
+              width: uploadResult.width || 0,
+              height: uploadResult.height || 0,
+              storageType: 'cloudinary'
+            });
+          } catch (mediaErr) {
+            console.warn('[Upload] Media logging notice:', mediaErr.message);
+          }
+          return uploadResult.secure_url;
+        }
+      } catch (uploadError) {
+        throw new Error(`Failed to upload ${fieldName} to Cloudinary: ${uploadError.message}`);
+      }
+    }
+    // If Cloudinary is not configured or upload fails:
+    throw new Error(`Direct base64 image data is not permitted for ${fieldName}. Please provide a valid image URL or upload using Cloudinary.`);
+  }
+
+  return trimmed;
 };
 
 /**
@@ -115,9 +205,22 @@ export const getProducts = async (req, res) => {
     const limitNum = Math.max(1, parseInt(limit, 10) || 50);
     const skip = (pageNum - 1) * limitNum;
 
+    // Set HTTP Cache-Control header for safe public reads (bypass for admin with Auth token or status=all)
+    if (!req.headers.authorization && (!status || status === 'active')) {
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
+    } else {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    }
+
+    // Build query with projection (supports full=true if complete document is explicitly needed)
+    const query = Product.find(filter);
+    if (req.query.full !== 'true') {
+      query.select(PUBLIC_PRODUCT_PROJECTION);
+    }
+
     // Execute query
     const [products, total] = await Promise.all([
-      Product.find(filter)
+      query
         .sort(sort)
         .skip(skip)
         .limit(limitNum)
@@ -165,6 +268,8 @@ export const getProductById = async (req, res) => {
       return sendError(res, 'Product not found.', 404);
     }
 
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
+
     return sendSuccess(res, 'Product retrieved successfully.', product);
   } catch (error) {
     console.error('❌ [getProductById Error]:', error.message);
@@ -190,6 +295,8 @@ export const getProductBySlug = async (req, res) => {
     if (!product) {
       return sendError(res, `Product with slug "${slug}" not found.`, 404);
     }
+
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
 
     return sendSuccess(res, 'Product retrieved successfully.', product);
   } catch (error) {
@@ -226,6 +333,29 @@ export const createProduct = async (req, res) => {
 
     if (!payload.mainImage || !payload.mainImage.trim()) {
       return sendError(res, 'Main product image URL is required.', 400);
+    }
+
+    // Guard and process image fields against base64 strings
+    try {
+      if (payload.mainImage) {
+        payload.mainImage = await processProductImageField(payload.mainImage, 'mainImage');
+        if (!payload.image) payload.image = payload.mainImage;
+      }
+      if (payload.image) {
+        payload.image = await processProductImageField(payload.image, 'image');
+      }
+      if (payload.backImage) {
+        payload.backImage = await processProductImageField(payload.backImage, 'backImage');
+      }
+      if (Array.isArray(payload.images) && payload.images.length > 0) {
+        const cleanedImages = [];
+        for (const img of payload.images) {
+          cleanedImages.push(await processProductImageField(img, 'images'));
+        }
+        payload.images = cleanedImages;
+      }
+    } catch (imgErr) {
+      return sendError(res, imgErr.message, 400);
     }
 
     // 2. Compute and validate slug
@@ -291,6 +421,28 @@ export const updateProduct = async (req, res) => {
         return sendError(res, `A product with slug "${cleanSlug}" already exists.`, 400);
       }
       payload.slug = cleanSlug;
+    }
+
+    // Guard and process image fields against base64 strings
+    try {
+      if (payload.mainImage) {
+        payload.mainImage = await processProductImageField(payload.mainImage, 'mainImage');
+      }
+      if (payload.image) {
+        payload.image = await processProductImageField(payload.image, 'image');
+      }
+      if (payload.backImage) {
+        payload.backImage = await processProductImageField(payload.backImage, 'backImage');
+      }
+      if (Array.isArray(payload.images) && payload.images.length > 0) {
+        const cleanedImages = [];
+        for (const img of payload.images) {
+          cleanedImages.push(await processProductImageField(img, 'images'));
+        }
+        payload.images = cleanedImages;
+      }
+    } catch (imgErr) {
+      return sendError(res, imgErr.message, 400);
     }
 
     const oldMainImage = product.mainImage;
