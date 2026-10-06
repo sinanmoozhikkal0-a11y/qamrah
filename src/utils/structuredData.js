@@ -9,7 +9,7 @@ export const generateOrganizationSchema = () => ({
   'logo': `${BASE_URL}/images/logo.png`,
   'description': 'Artisanal purveyors of handpicked colossal W-180 cashews, California almonds, sacred Ajwa dates, and Iranian pistachios.',
   'email': 'concierge@qamrahnuts.com',
-  'telephone': '+916235820223',
+  'telephone': '+917558009630',
   'address': {
     '@type': 'PostalAddress',
     'streetAddress': 'BKC Commercial Complex, Bandra East',
@@ -18,7 +18,7 @@ export const generateOrganizationSchema = () => ({
     'addressCountry': 'IN'
   },
   'sameAs': [
-    'https://instagram.com/qamrahnuts',
+    'https://www.instagram.com/qamrah_in?stkn=MWNuNG1paXlheDR5NQ==',
     'https://facebook.com/qamrahnuts',
     'https://youtube.com/@qamrahnuts'
   ]

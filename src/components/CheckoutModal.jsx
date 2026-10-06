@@ -208,7 +208,7 @@ export default function CheckoutModal({ isOpen, onClose }) {
             </h2>
 
             <p style={{ color: 'var(--color-cream-muted)', fontSize: '0.95rem', marginBottom: '24px' }}>
-              Your order <strong style={{ color: 'var(--color-gold-light)' }}>#{orderId}</strong> has been saved and an instant notification has been dispatched to our concierge team at <strong style={{ color: '#FFFFFF' }}>+91 62358 20223</strong>.
+              Your order <strong style={{ color: 'var(--color-gold-light)' }}>#{orderId}</strong> has been saved and an instant notification has been dispatched to our concierge team at <strong style={{ color: '#FFFFFF' }}>+91 755 800 9630</strong>.
             </p>
 
             <div

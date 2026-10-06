@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, ArrowUp } from 'lucide-react';
 import Logo from './Logo';
+import { api } from '../services/api';
 
 export default function Footer() {
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    api.settings.get().then((res) => {
+      if (isMounted && res?.success && res.data) {
+        setSettings(res.data);
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
+  const instagramUrl = settings?.socialLinks?.instagram || 'https://www.instagram.com/qamrah_in?stkn=MWNuNG1paXlheDR5NQ==';
+  const whatsappDigits = (settings?.whatsappNumber || '917558009630').replace(/[^0-9]/g, '');
+  const whatsappUrl = `https://wa.me/${whatsappDigits || '917558009630'}?text=${encodeURIComponent('Hi QAMRAH, I need help with my order.')}`;
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -153,6 +170,23 @@ export default function Footer() {
             </h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <li>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: '0.875rem',
+                    color: 'var(--color-gold-base)',
+                    fontWeight: '600',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  Need Help? Chat on WhatsApp
+                </a>
+              </li>
+              <li>
                 <Link to="/contact" style={{ fontSize: '0.875rem' }}>
                   Track Order
                 </Link>
@@ -198,9 +232,9 @@ export default function Footer() {
             <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
               {/* Instagram SVG */}
               <a
-                href="https://instagram.com"
+                href={instagramUrl}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 aria-label="Instagram"
                 style={{
                   width: '38px',
@@ -226,7 +260,7 @@ export default function Footer() {
               <a
                 href="https://facebook.com"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 aria-label="Facebook"
                 style={{
                   width: '38px',
@@ -250,7 +284,7 @@ export default function Footer() {
               <a
                 href="https://youtube.com"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 aria-label="YouTube"
                 style={{
                   width: '38px',
@@ -268,6 +302,30 @@ export default function Footer() {
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
                   <polygon points="10 15 15 12 10 9 10 15" fill="currentColor"/>
+                </svg>
+              </a>
+
+              {/* WhatsApp Support SVG */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp Customer Support"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(199, 154, 74, 0.1)',
+                  border: '1px solid rgba(199, 154, 74, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--color-gold-base)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                 </svg>
               </a>
             </div>

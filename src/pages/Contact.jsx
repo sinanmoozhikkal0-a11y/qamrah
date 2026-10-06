@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, ChevronDown, Sparkles } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, ChevronDown, Sparkles, MessageCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import SEO from '../components/SEO';
 import { generateBreadcrumbSchema, generateFAQSchema } from '../utils/structuredData';
@@ -97,7 +97,9 @@ export default function Contact() {
   };
 
   const email = contactData?.email || 'concierge@qamrahnuts.com';
-  const phone = contactData?.phone || '+91 (022) 8940-2200 / +91 98200 44888';
+  const phone = contactData?.phone || '+91 (022) 8940-2200 / +91 755 800 9630';
+  const whatsappDigits = (contactData?.whatsapp || '917558009630').replace(/[^0-9]/g, '');
+  const whatsappHelpUrl = `https://wa.me/${whatsappDigits || '917558009630'}?text=${encodeURIComponent('Hi QAMRAH, I need help with my order.')}`;
   const address = contactData?.address || 'QAMRAH Fine Foods Ltd, 4th Floor, Crescent Tower, BKC Commercial Complex, Mumbai 400051, India';
   const workingHours = contactData?.workingHours || 'Monday – Saturday: 9:00 AM – 8:00 PM IST';
 
@@ -165,9 +167,26 @@ export default function Contact() {
               <div>
                 <h3 style={{ fontSize: '1rem', color: '#FFFFFF', marginBottom: '4px' }}>Toll-Free &amp; WhatsApp</h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-cream-muted)', marginBottom: '4px' }}>Direct phone support &amp; order assistance:</p>
-                <div style={{ color: 'var(--color-gold-base)', fontWeight: '600', fontSize: '0.9rem' }}>
+                <div style={{ color: 'var(--color-gold-base)', fontWeight: '600', fontSize: '0.9rem', marginBottom: '8px' }}>
                   {phone}
                 </div>
+                <a
+                  href={whatsappHelpUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#68D391',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    textDecoration: 'none'
+                  }}
+                >
+                  <MessageCircle size={15} />
+                  <span>Need Help? Chat on WhatsApp</span>
+                </a>
               </div>
             </div>
 

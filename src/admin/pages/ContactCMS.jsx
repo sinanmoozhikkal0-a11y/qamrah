@@ -239,6 +239,7 @@ export default function ContactCMS() {
                   value={contactData.whatsapp || ''}
                   onChange={(e) => setContactData({ ...contactData, whatsapp: e.target.value })}
                   className="admin-input"
+                  placeholder="+91 755 800 9630"
                 />
               </div>
               <div className="admin-form-group">

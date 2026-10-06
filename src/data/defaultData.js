@@ -626,8 +626,8 @@ export const defaultContactPage = {
     description: 'Have a question about our harvest grades, custom hampers, or existing orders? Our dedicated team is delighted to assist you.'
   },
   email: 'concierge@qamrahnuts.com',
-  phone: '+91 (022) 8940-2200 / +91 98200 44888',
-  whatsapp: '+91 62358 20223',
+  phone: '+91 (022) 8940-2200 / +91 755 800 9630',
+  whatsapp: '+91 755 800 9630',
   address: 'QAMRAH Fine Foods Ltd, 4th Floor, Crescent Tower, BKC Commercial Complex, Mumbai 400051, India',
   workingHours: 'Monday – Saturday: 9:00 AM – 8:00 PM IST'
 };
@@ -673,14 +673,14 @@ export const defaultSettings = {
   logo: '/images/logo.png',
   email: 'concierge@qamrahnuts.com',
   phone: '+91 (022) 8940-2200',
-  whatsappNumber: '+916235820223',
+  whatsappNumber: '+917558009630',
   address: 'BKC Commercial Complex, Bandra East, Mumbai 400051, India',
   currency: 'INR',
   currencySymbol: '₹',
   shippingCharge: 49,
   freeShippingThreshold: 999,
   socialLinks: {
-    instagram: 'https://instagram.com/qamrahnuts',
+    instagram: 'https://www.instagram.com/qamrah_in?stkn=MWNuNG1paXlheDR5NQ==',
     facebook: 'https://facebook.com/qamrahnuts',
     youtube: 'https://youtube.com/@qamrahnuts'
   },

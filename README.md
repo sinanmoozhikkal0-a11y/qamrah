@@ -13,7 +13,7 @@
    - **One-Click WhatsApp Checkout:** Automated order numbering (`QMR-XXXXXX`) with luxury celebratory confetti, saving orders locally and generating direct WhatsApp click-to-chat links formatted for instant concierge order processing.
 
 2. **Automated WhatsApp Order Concierge:**
-   - **Target Concierge Number:** **`+91 62358 20223`**
+   - **Target Concierge Number:** **`+91 755 800 9630`**
    - **Instant Direct Messaging:** Generates a pre-filled `https://wa.me/` direct link containing the customer's name, phone, shipping address, ordered items, chosen pack designs, and total payable amount.
 
 3. **Super CMS & Admin Concierge Portal (`/admin`):**

@@ -167,10 +167,10 @@ export default function SettingsCMS() {
               <label className="admin-label">Target Admin WhatsApp Number *</label>
               <input
                 type="text"
-                value={settings.whatsappNumber || '+916235820223'}
+                value={settings.whatsappNumber || '+917558009630'}
                 onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
                 className="admin-input"
-                placeholder="+916235820223"
+                placeholder="+917558009630"
               />
             </div>
 

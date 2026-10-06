@@ -555,7 +555,7 @@ export const api = {
       const newOrder = json.data;
 
       // Generate direct WhatsApp click-to-chat URL
-      const adminWhatsApp = (getStored('qamrah_settings', defaultSettings).whatsappNumber || '916235820223').replace(/[^0-9]/g, '');
+      const adminWhatsApp = (getStored('qamrah_settings', defaultSettings).whatsappNumber || '917558009630').replace(/[^0-9]/g, '');
       const messageText = formatOrderMessage(newOrder);
       const whatsappFallbackUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(messageText)}`;
 
@@ -864,6 +864,10 @@ export const api = {
   contact: {
     get: async () => {
       const data = getStored('qamrah_contact', defaultContactPage);
+      if (data?.whatsapp === '+91 62358 20223') {
+        data.whatsapp = '+91 755 800 9630';
+        setStored('qamrah_contact', data);
+      }
       return { success: true, data };
     },
     update: async (data) => {
@@ -1059,6 +1063,24 @@ export const api = {
   settings: {
     get: async () => {
       const data = getStored('qamrah_settings', defaultSettings);
+      let modified = false;
+      if (data?.whatsappNumber === '+916235820223' || data?.whatsappNumber === '916235820223') {
+        data.whatsappNumber = '+917558009630';
+        modified = true;
+      }
+      if (
+        data?.socialLinks?.instagram === 'https://instagram.com/qamrahnuts' ||
+        data?.socialLinks?.instagram === 'https://instagram.com'
+      ) {
+        data.socialLinks = {
+          ...data.socialLinks,
+          instagram: 'https://www.instagram.com/qamrah_in?stkn=MWNuNG1paXlheDR5NQ=='
+        };
+        modified = true;
+      }
+      if (modified) {
+        setStored('qamrah_settings', data);
+      }
       return { success: true, data };
     },
     update: async (data) => {
