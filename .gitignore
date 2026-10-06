@@ -30,3 +30,9 @@ backend/.env.*
 *.njsproj
 *.sln
 *.sw?
+
+# Temporary database backups, diagnostic, and migration scripts
+backend/backups/
+backend/scripts/diagnose_*.mjs
+backend/scripts/inspect_*.mjs
+backend/scripts/migrate_*.mjs
