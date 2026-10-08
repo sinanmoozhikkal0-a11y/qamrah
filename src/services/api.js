@@ -204,6 +204,8 @@ const formatOrder = (order) => {
   };
 };
 
+let inFlightHomePromise = null;
+
 export const api = {
   // Authentication (Real JWT authentication with MongoDB backend)
   auth: {
@@ -794,12 +796,66 @@ export const api = {
 
   // Home Page CMS
   home: {
-    get: async () => {
-      const data = getStored('qamrah_home', defaultHomePage);
-      return { success: true, data };
+    get: async (forceRefresh = false) => {
+      if (!forceRefresh && inFlightHomePromise) {
+        return inFlightHomePromise;
+      }
+
+      inFlightHomePromise = (async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/home`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && json.data) {
+              setStored('qamrah_home', json.data);
+              return { success: true, data: json.data };
+            }
+          }
+        } catch {
+          // Fallback to local storage or defaults when offline
+        } finally {
+          setTimeout(() => {
+            inFlightHomePromise = null;
+          }, 300);
+        }
+        const data = getStored('qamrah_home', defaultHomePage);
+        return { success: true, data };
+      })();
+
+      return inFlightHomePromise;
     },
     update: async (data) => {
       setStored('qamrah_home', data);
+      try {
+        const res = await fetch(`${API_BASE_URL}/home`, {
+          method: 'PUT',
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            setStored('qamrah_home', json.data);
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('qamrah_home_updated', { detail: json.data }));
+            }
+            return { success: true, data: json.data, message: 'Home page CMS updated.' };
+          }
+        } else {
+          const errJson = await res.json().catch(() => null);
+          if (errJson?.message) {
+            throw new Error(errJson.message);
+          }
+        }
+      } catch (err) {
+        if (err.message) throw err;
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('qamrah_home_updated', { detail: data }));
+      }
       return { success: true, data, message: 'Home page CMS updated.' };
     }
   },

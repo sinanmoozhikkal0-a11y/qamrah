@@ -2,142 +2,131 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../services/api';
+import { defaultHomePage } from '../data/defaultData';
 import { TORN_PAPER_D } from './tornPaperPath';
 
-const defaultProducts = [
-  {
-    id: 'dates',
-    name: 'Fresh Dates',
-    subName: 'Royal Madinah & Saudi Harvest',
-    headline: 'Start Your Day With Our Fresh Dates.',
-    headingLine1: 'Start Your Day With Our',
-    headingLine2: 'Fresh Dates.',
-    image: '/images/hero_slide_dates.jpg',
-    pouchImage: '/images/pouch_dates.jpg',
-    description: 'Naturally soft, caramel-rich, and nourishing from royal Madinah groves.',
-    ctaText: 'Buy Now',
-    link: '/product/dates',
-    order: 1,
-    isActive: true
-  },
-  {
-    id: 'cashews',
-    name: 'Whole Cashews',
-    subName: 'Colossal W-180 • Hand-Selected',
-    headline: 'Fuel Your Day With Crunchy Cashews.',
-    headingLine1: 'Pure Crunch In Every Bite',
-    headingLine2: 'Colossal Cashews.',
-    image: '/images/hero_slide_cashews.jpg',
-    pouchImage: '/images/pouch_cashew.jpg',
-    description: 'Naturally sourced, hand-sorted colossal kernels with an irresistible golden crunch.',
-    ctaText: 'Buy Now',
-    link: '/product/cashews',
-    order: 2,
-    isActive: true
-  },
-  {
-    id: 'almonds',
-    name: 'California Almonds',
-    subName: 'Supreme Grade • 100% Raw & Natural',
-    headline: 'Sun-Drenched Vitality California Almonds.',
-    headingLine1: 'Sun-Drenched Vitality',
-    headingLine2: 'California Almonds.',
-    image: '/images/hero_slide_almonds.jpg',
-    pouchImage: '/images/pouch_almond.jpg',
-    description: 'Rich in natural Vitamin E, wholesome plant protein, and revitalizing crispness.',
-    ctaText: 'Buy Now',
-    link: '/product/almonds',
-    order: 3,
-    isActive: true
-  },
-  {
-    id: 'pistachios',
-    name: 'Persian Pistachios',
-    subName: 'Persian Akbari • Light Pink Salt Roast',
-    headline: 'Naturally Opened & Crisp Persian Pistachios.',
-    headingLine1: 'Naturally Opened & Crisp',
-    headingLine2: 'Persian Pistachios.',
-    image: '/images/hero_slide_pistachios.png',
-    pouchImage: '/images/pouch_pista.jpg',
-    description: 'Jumbo sun-dried kernels slowly dry-roasted with mineral-rich pink rock salt.',
-    ctaText: 'Buy Now',
-    link: '/product/pistachios',
-    order: 4,
-    isActive: true
-  },
-  {
-    id: 'pistachios-dark',
-    name: 'Royal Emerald Pistachios',
-    subName: 'Emerald Harvest • Rare Caliber',
-    headline: 'The True Taste of Royal Luxury Pistachios.',
-    headingLine1: 'The True Taste of Royal',
-    headingLine2: 'Luxury Pistachios.',
-    image: '/images/hero_slide_pista_dark.jpg',
-    pouchImage: '/images/pouch_pista.jpg',
-    description: 'Vibrant emerald green kernels harvested at peak ripeness for unmatched royal aroma.',
-    ctaText: 'Buy Now',
-    link: '/product/pistachios',
-    order: 5,
-    isActive: true
+// Normalizer for products array from CMS/backend
+const normalizeHeroProducts = (rawProducts) => {
+  if (!Array.isArray(rawProducts) || rawProducts.length === 0) {
+    return [];
   }
-];
-
-const defaultHeroConfig = {
-  enabled: true,
-  rotationTiming: 5,
-  products: defaultProducts
+  return rawProducts
+    .filter((p) => p && p.isActive !== false && p.image)
+    .map((p, idx) => ({ ...p, _idx: idx }))
+    .sort((a, b) => {
+      const orderA = a.order !== undefined && a.order !== null && a.order !== '' ? Number(a.order) : a._idx;
+      const orderB = b.order !== undefined && b.order !== null && b.order !== '' ? Number(b.order) : b._idx;
+      return orderA - orderB;
+    });
 };
 
-export default function Hero({ onQuickView: _onQuickView }) {
-  const [heroConfig, setHeroConfig] = useState(defaultHeroConfig);
+const getFallbackHeroConfig = () => {
+  return defaultHomePage?.heroSection || {
+    enabled: true,
+    rotationTiming: 4,
+    products: []
+  };
+};
+
+export default function Hero({ onQuickView: _onQuickView, heroData: propHeroData }) {
+  // Initialize with prop, localStorage cache, or default fallback
+  const [heroConfig, setHeroConfig] = useState(() => {
+    if (propHeroData && propHeroData.enabled !== false) {
+      return propHeroData;
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qamrah_home');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.heroSection && parsed.heroSection.enabled !== false) {
+            return parsed.heroSection;
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    return getFallbackHeroConfig();
+  });
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
   const slideTimerRef = useRef(null);
 
-  // Fetch dynamic hero configuration from CMS
+  const applyHeroConfig = useCallback((cmsHero) => {
+    if (!cmsHero || cmsHero.enabled === false) return;
+    setHeroConfig(cmsHero);
+  }, []);
+
+  // Update when propHeroData changes from parent
+  useEffect(() => {
+    if (propHeroData && propHeroData.enabled !== false) {
+      applyHeroConfig(propHeroData);
+    }
+  }, [propHeroData, applyHeroConfig]);
+
+  // Fetch from GET /api/home if propHeroData not supplied, and listen for live CMS updates
   useEffect(() => {
     let isMounted = true;
 
-    const fetchHeroData = async () => {
-      try {
-        const res = await api.home.get();
-        if (!isMounted) return;
-
-        if (res.success && res.data) {
-          const cmsHero = res.data.heroSection;
-          if (cmsHero && cmsHero.enabled !== false) {
-            let activeProducts = [];
-            if (Array.isArray(cmsHero.products) && cmsHero.products.length > 0) {
-              activeProducts = cmsHero.products
-                .filter((p) => p.isActive !== false)
-                .sort((a, b) => (a.order || 0) - (b.order || 0));
-            }
-
-            setHeroConfig({
-              enabled: true,
-              rotationTiming: cmsHero.rotationTiming || 5,
-              products: activeProducts.length > 0 ? activeProducts : defaultProducts
-            });
+    if (!propHeroData) {
+      const fetchHeroData = async () => {
+        try {
+          const res = await api.home.get();
+          if (!isMounted) return;
+          if (res.success && res.data?.heroSection) {
+            applyHeroConfig(res.data.heroSection);
           }
+        } catch {
+          // Fallback
         }
-      } catch {
-        // Fallback to defaults
+      };
+
+      fetchHeroData();
+    }
+
+    // Listen to real-time updates dispatched when admin saves in HomeCMS
+    const handleHomeUpdated = (e) => {
+      if (!isMounted) return;
+      if (e.detail?.heroSection) {
+        applyHeroConfig(e.detail.heroSection);
       }
     };
 
-    fetchHeroData();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('qamrah_home_updated', handleHomeUpdated);
+    }
+
     return () => {
       isMounted = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('qamrah_home_updated', handleHomeUpdated);
+      }
     };
-  }, []);
+  }, [propHeroData, applyHeroConfig]);
 
-  const products = heroConfig.products && heroConfig.products.length > 0
-    ? heroConfig.products
-    : defaultProducts;
+  // Derive normalized product items from current backend configuration
+  const cmsProducts = normalizeHeroProducts(heroConfig?.products);
+  const fallbackProducts = normalizeHeroProducts(getFallbackHeroConfig().products);
+  const products = cmsProducts.length > 0 ? cmsProducts : fallbackProducts;
 
   const totalProducts = products.length;
-  const currentProduct = products[currentSlide % totalProducts] || products[0];
+  const activeSlideIndex = totalProducts > 0 ? ((currentSlide % totalProducts) + totalProducts) % totalProducts : 0;
+  const currentProduct = products[activeSlideIndex] || products[0] || {};
+
+  // Progressive background preloading of remaining hero images
+  useEffect(() => {
+    if (products.length > 1 && typeof window !== 'undefined') {
+      products.slice(1).forEach((prod) => {
+        if (prod.image) {
+          const img = new Image();
+          img.src = prod.image;
+        }
+      });
+    }
+  }, [products]);
 
   const handleNext = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % totalProducts);
@@ -151,11 +140,13 @@ export default function Hero({ onQuickView: _onQuickView }) {
     setCurrentSlide(idx);
   };
 
-  // Auto-rotation timer (pauses when user hovers)
+  // Auto-rotation timer (pauses when user hovers, uses backend rotation timing)
   useEffect(() => {
     if (isHovered || totalProducts <= 1) return;
 
-    const intervalTime = (heroConfig.rotationTiming || 5) * 1000;
+    const rawTiming = Number(heroConfig.rotationTiming);
+    const intervalTime = (rawTiming && rawTiming > 0 ? rawTiming : 4) * 1000;
+
     slideTimerRef.current = setInterval(() => {
       handleNext();
     }, intervalTime);
@@ -215,18 +206,19 @@ export default function Hero({ onQuickView: _onQuickView }) {
       {/* Background Slides with High-Resolution Photography */}
       <div className="hero-slides-wrapper">
         {products.map((product, idx) => {
-          const isActive = idx === currentSlide;
+          const isActive = idx === activeSlideIndex;
           return (
             <div
-              key={product.id || product._id || idx}
+              key={product.id || product._id || product.image || idx}
               className={`hero-slide-item ${isActive ? 'active' : ''}`}
               aria-hidden={!isActive}
             >
               <img
-                src={product.image || '/images/hero_slide_dates.jpg'}
+                src={product.image}
                 alt={product.name || 'QAMRAH Premium Dates and Nuts'}
                 className="hero-slide-img"
                 fetchPriority={idx === 0 ? 'high' : 'auto'}
+                loading={idx === 0 ? 'eager' : 'lazy'}
                 decoding="async"
               />
             </div>
@@ -259,7 +251,7 @@ export default function Hero({ onQuickView: _onQuickView }) {
               <Link
                 to={currentProduct.link || '/shop'}
                 className="hero-buy-now-button"
-                id={`hero-buy-now-${currentProduct.id || currentSlide}`}
+                id={`hero-buy-now-${currentProduct.id || activeSlideIndex}`}
               >
                 {currentProduct.ctaText || 'Buy Now'}
               </Link>
@@ -290,14 +282,14 @@ export default function Hero({ onQuickView: _onQuickView }) {
       {/* Bottom Center Pagination Dots (Exact layout from Picture 1) */}
       <div className="hero-pagination-dots" role="tablist" aria-label="Slide indicators">
         {products.map((product, idx) => {
-          const isActive = idx === currentSlide;
+          const isActive = idx === activeSlideIndex;
           return (
             <button
-              key={idx}
+              key={product.id || product._id || product.image || idx}
               type="button"
               role="tab"
               aria-selected={isActive}
-              aria-label={`Slide ${idx + 1} - ${product.name}`}
+              aria-label={`Slide ${idx + 1} - ${product.name || 'Product'}`}
               onClick={() => handleSelectSlide(idx)}
               className={`hero-dot-indicator ${isActive ? 'active' : ''}`}
             />
@@ -356,15 +348,17 @@ export default function Hero({ onQuickView: _onQuickView }) {
           width: 100%;
           height: 100%;
           opacity: 0;
-          transform: scale(1.03);
-          transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 6s cubic-bezier(0.25, 1, 0.5, 1);
+          transform: scale(1.035);
+          transition: opacity 1.0s cubic-bezier(0.4, 0, 0.2, 1), transform 4.5s cubic-bezier(0.25, 1, 0.5, 1);
           pointer-events: none;
+          will-change: opacity, transform;
         }
 
         .hero-slide-item.active {
           opacity: 1;
           transform: scale(1);
           pointer-events: auto;
+          z-index: 2;
         }
 
         .hero-slide-img {

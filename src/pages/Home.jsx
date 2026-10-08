@@ -94,7 +94,7 @@ export default function Home() {
         ]}
       />
       {/* SECTION 1: HERO */}
-      <Hero onQuickView={setQuickViewProduct} />
+      <Hero onQuickView={setQuickViewProduct} heroData={cmsData?.heroSection} />
 
       {/* SECTION 2: BESTSELLERS */}
       <section
