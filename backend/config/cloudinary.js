@@ -1,3 +1,4 @@
+import './env.js';
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -7,13 +8,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure .env is loaded
-dotenv.config({ path: path.join(__dirname, '../.env') });
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const configureCloudinary = () => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME ? String(process.env.CLOUDINARY_CLOUD_NAME).trim() : '';
+  const apiKey = process.env.CLOUDINARY_API_KEY ? String(process.env.CLOUDINARY_API_KEY).trim() : '';
+  const apiSecret = process.env.CLOUDINARY_API_SECRET ? String(process.env.CLOUDINARY_API_SECRET).trim() : '';
 
   if (cloudName && apiKey && apiSecret) {
     cloudinary.config({
@@ -25,7 +26,8 @@ const configureCloudinary = () => {
     return true;
   }
 
-  if (process.env.CLOUDINARY_URL) {
+  const cloudinaryUrl = process.env.CLOUDINARY_URL ? String(process.env.CLOUDINARY_URL).trim() : '';
+  if (cloudinaryUrl) {
     cloudinary.config({ secure: true });
     return true;
   }
@@ -38,6 +40,9 @@ let isConfigured = configureCloudinary();
 
 export const ensureConfigured = () => {
   if (!isConfigured) {
+    // Attempt dynamic reload in case environment was populated after initial load
+    dotenv.config({ path: path.resolve(__dirname, '../.env') });
+    dotenv.config({ path: path.resolve(__dirname, '../../.env') });
     isConfigured = configureCloudinary();
   }
   return isConfigured;
